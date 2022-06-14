@@ -27,7 +27,6 @@ class BruteForceScheduler(FlowScheduler):
 
         return maximum_flow.process() == duration_sum
 
-
     @classmethod
     def process(cls, max_concurrency: int, jobs: List[Job]) -> Schedule:
         max_t = max([job.deadline for job in jobs]) + 1
