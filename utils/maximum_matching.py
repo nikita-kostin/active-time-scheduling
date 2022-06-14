@@ -1,6 +1,15 @@
 # -*- coding: utf-8 -*-
+from abc import ABC, abstractmethod
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 from queue import Queue
+
+
+class AbstractMaximumMatching(ABC):
+
+    @staticmethod
+    @abstractmethod
+    def process(graph: List[Set[int]]) -> Dict[int, int]:
+        pass
 
 
 def is_matching_feasible(graph: List[Set[int]], m: Dict[int, int]) -> bool:
@@ -23,7 +32,7 @@ def is_matching_feasible(graph: List[Set[int]], m: Dict[int, int]) -> bool:
     return True
 
 
-class BruteForceMaximumMatching(object):
+class BruteForceMaximumMatching(AbstractMaximumMatching):
 
     @staticmethod
     def process(graph: List[Set[int]]) -> Dict[int, int]:
@@ -78,7 +87,7 @@ class TreeNode(object):
     __repr__ = __str__
 
 
-class BlossomMaximumMatching(object):
+class BlossomMaximumMatching(AbstractMaximumMatching):
 
     @staticmethod
     def _alternate_path(path: List[int], m: Dict[int, int]) -> None:
