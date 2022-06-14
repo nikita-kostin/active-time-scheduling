@@ -23,8 +23,7 @@ class FlowScheduler(AbstractScheduler):
         for i, job in enumerate(jobs):
             u, v = 0, 1 + i
 
-            graph[u].add(v)
-            graph[v].add(u)
+            AbstractScheduler._add_edge(u, v, graph)
 
             c[(u, v)] = job.duration
 
@@ -32,8 +31,7 @@ class FlowScheduler(AbstractScheduler):
             u = 1 + len(jobs) + t
             v = 1 + len(jobs) + max_t
 
-            graph[u].add(v)
-            graph[v].add(u)
+            AbstractScheduler._add_edge(u, v, graph)
 
             c[(u, v)] = max_concurrency
 
