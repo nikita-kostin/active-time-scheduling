@@ -1,19 +1,7 @@
 # -*- coding: utf-8 -*-
 from typing import List, Optional
 
-from models import JobSchedule
-
-
-class ActiveTimeSlot(object):
-
-    def __init__(self, start: int, end: int) -> None:
-        self.start = start
-        self.end = end
-
-    def __str__(self) -> str:
-        return "ActiveTimeSlot(start={0}, end={1})".format(self.start, self.end)
-
-    __repr__ = __str__
+from models import JobSchedule, TimeInterval
 
 
 class Schedule(object):
@@ -21,7 +9,7 @@ class Schedule(object):
     def __init__(
             self,
             all_jobs_scheduled: bool,
-            active_time_slots: Optional[List[ActiveTimeSlot]],
+            active_time_slots: Optional[List[TimeInterval]],
             job_schedules: Optional[List[JobSchedule]],
     ) -> None:
         self.all_jobs_scheduled = all_jobs_scheduled

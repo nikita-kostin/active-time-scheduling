@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
-from .job import Job
+from .job import Job, JobWithMultipleIntervals, TimeInterval
 from .job_schedule import JobSchedule
-from .schedule import ActiveTimeSlot, Schedule
+from .schedule import Schedule
 
 __all__ = [
-    ActiveTimeSlot,
     Job,
+    JobWithMultipleIntervals,
     JobSchedule,
     Schedule,
+    TimeInterval,
 ]

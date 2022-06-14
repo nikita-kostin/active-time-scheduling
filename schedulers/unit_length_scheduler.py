@@ -2,7 +2,7 @@
 from abc import ABC, abstractmethod
 from typing import Dict, Iterable, List, Set
 
-from models import ActiveTimeSlot, Job, JobSchedule, Schedule
+from models import Job, JobSchedule, Schedule, TimeInterval
 from schedulers import AbstractScheduler
 from utils import DisjointSetNode
 
@@ -72,7 +72,7 @@ class AbstractUnitJobsScheduler(AbstractScheduler, ABC):
 
     @classmethod
     @abstractmethod
-    def _get_active_time_slots(cls, job_schedules: List[JobSchedule]) -> Iterable[ActiveTimeSlot]:
+    def _get_active_time_slots(cls, job_schedules: List[JobSchedule]) -> Iterable[TimeInterval]:
         pass
 
     @classmethod
@@ -126,7 +126,7 @@ class UnitJobsSchedulerNLogN(AbstractUnitJobsScheduler):
             yield from cls._get_jobs_for_timestamp(max_concurrency, t, available_jss, deadline_to_jss)
 
     @classmethod
-    def _get_active_time_slots(cls, job_schedules: List[JobSchedule]) -> Iterable[ActiveTimeSlot]:
+    def _get_active_time_slots(cls, job_schedules: List[JobSchedule]) -> Iterable[TimeInterval]:
         active_time_slots = [(js.execution_start, js.execution_end) for js in job_schedules]
 
         yield from cls._merge_active_time_slots(active_time_slots)
@@ -178,7 +178,7 @@ class UnitJobsSchedulerT(AbstractUnitJobsScheduler):
             yield from cls._get_jobs_for_timestamp(max_concurrency, t, available_jss, deadline_to_jss)
 
     @classmethod
-    def _get_active_time_slots(cls, job_schedules: List[JobSchedule]) -> Iterable[ActiveTimeSlot]:
+    def _get_active_time_slots(cls, job_schedules: List[JobSchedule]) -> Iterable[TimeInterval]:
         active_timestamps = set()
         for js in job_schedules:
             active_timestamps.add(js.execution_start)
