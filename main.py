@@ -9,8 +9,8 @@ from schedulers import FlowScheduler, UnitJobsScheduler
 
 
 class Scheduler(Enum):
-    unit_jobs_scheduler = 'UnitJobsScheduler'
     flow_scheduler = 'FlowScheduler'
+    unit_jobs_scheduler = 'UnitJobsScheduler'
 
 
 def parse_args() -> Namespace:

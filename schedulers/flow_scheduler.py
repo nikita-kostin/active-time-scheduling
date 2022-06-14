@@ -15,7 +15,7 @@ class FlowScheduler(AbstractScheduler):
             jobs: List[Job],
     ) -> Tuple[List[Set[int]], Dict[Tuple[int, int], int]]:
         graph = []
-        c = dict()
+        c = {}
 
         for _ in range(1 + len(jobs) + max_t + 1):
             graph.append(set())
@@ -28,8 +28,8 @@ class FlowScheduler(AbstractScheduler):
 
             c[(u, v)] = job.duration
 
-        for i in range(max_t):
-            u = 1 + len(jobs) + i
+        for t in range(max_t):
+            u = 1 + len(jobs) + t
             v = 1 + len(jobs) + max_t
 
             graph[u].add(v)
