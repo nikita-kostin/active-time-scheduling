@@ -5,11 +5,18 @@ from enum import Enum
 from typing import List
 
 from models import Job, Schedule
-from schedulers import FlowScheduler, UnitJobsScheduler
+from schedulers import (
+    BruteForceScheduler,
+    FlowScheduler,
+    MatchingScheduler,
+    UnitJobsScheduler,
+)
 
 
 class Scheduler(Enum):
+    brute_force_scheduler = 'BruteForceScheduler'
     flow_scheduler = 'FlowScheduler'
+    matching_scheduler = 'MatchingScheduler'
     unit_jobs_scheduler = 'UnitJobsScheduler'
 
 
@@ -43,7 +50,9 @@ def parse_args() -> Namespace:
 
 def process_case(solver: Scheduler, max_concurrency: int, jobs: List[Job]) -> Schedule:
     return {
+        Scheduler.brute_force_scheduler: BruteForceScheduler,
         Scheduler.flow_scheduler: FlowScheduler,
+        Scheduler.matching_scheduler: MatchingScheduler,
         Scheduler.unit_jobs_scheduler: UnitJobsScheduler,
     }[solver].process(max_concurrency, jobs)
 
