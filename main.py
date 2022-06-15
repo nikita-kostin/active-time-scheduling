@@ -8,6 +8,7 @@ from models import Job, Schedule
 from schedulers import (
     BruteForceScheduler,
     FlowScheduler,
+    LinearProgrammingArbitraryPreemptionScheduler,
     MatchingScheduler,
     UnitJobsScheduler,
 )
@@ -16,6 +17,7 @@ from schedulers import (
 class Scheduler(Enum):
     brute_force_scheduler = 'BruteForceScheduler'
     flow_scheduler = 'FlowScheduler'
+    linear_programming_arbitrary_preemption_scheduler = 'LinearProgrammingArbitraryPreemptionScheduler'
     matching_scheduler = 'MatchingScheduler'
     unit_jobs_scheduler = 'UnitJobsScheduler'
 
@@ -52,6 +54,7 @@ def process_case(solver: Scheduler, max_concurrency: int, jobs: List[Job]) -> Sc
     return {
         Scheduler.brute_force_scheduler: BruteForceScheduler,
         Scheduler.flow_scheduler: FlowScheduler,
+        Scheduler.linear_programming_arbitrary_preemption_scheduler: LinearProgrammingArbitraryPreemptionScheduler,
         Scheduler.matching_scheduler: MatchingScheduler,
         Scheduler.unit_jobs_scheduler: UnitJobsScheduler,
     }[solver].process(max_concurrency, jobs)
