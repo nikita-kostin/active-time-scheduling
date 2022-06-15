@@ -31,6 +31,8 @@ class JobWithMultipleIntervals(object):
             self.duration
         )
 
+    __repr__ = __str__
+
 
 @total_ordering
 class Job(JobWithMultipleIntervals):
