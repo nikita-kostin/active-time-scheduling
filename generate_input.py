@@ -12,7 +12,8 @@ def parse_args() -> Namespace:
         type=str,
         dest='output',
         help='Path to the output file.',
-        required=True,
+        required=False,
+        default='input.txt',
     )
     parser.add_argument(
         '--count',

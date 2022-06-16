@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 import json
+import os
 from argparse import ArgumentParser, Namespace
 from enum import Enum
 from typing import List
 
+from create_image import create_image_from_schedule
 from models import Job, Schedule
 from schedulers import (
     BruteForceScheduler,
@@ -30,14 +32,16 @@ def parse_args() -> Namespace:
         type=str,
         dest='input',
         help='Path to the input file.',
-        required=True,
+        required=False,
+        default='input.txt',
     )
     parser.add_argument(
         '--output',
         type=str,
         dest='output',
         help='Path to the output file.',
-        required=True,
+        required=False,
+        default='output.txt',
     )
     parser.add_argument(
         '--solver',
@@ -45,6 +49,22 @@ def parse_args() -> Namespace:
         dest='solver',
         help='Solver that should process the input. Available solvers: %s.' % ', '.join([e.value for e in Scheduler]),
         required=True,
+    )
+    parser.add_argument(
+        '--create-images',
+        type=bool,
+        dest='create_images',
+        help='Create images with visualised output schedules.',
+        required=False,
+        default=False,
+    )
+    parser.add_argument(
+        '--output-images-folder',
+        type=str,
+        dest='output_images_folder',
+        help='Path to the output images folder',
+        required=False,
+        default='output-images',
     )
 
     return parser.parse_args()
@@ -87,6 +107,12 @@ def main() -> None:
                 json.dumps(schedule, default=lambda obj: obj.__dict__)
             )
         )
+
+        if args.create_images is True:
+            if os.path.isdir(args.output_images_folder) is False:
+                os.mkdir(args.output_images_folder)
+
+            create_image_from_schedule(jobs, schedule, "%s/case_%d.png" % (args.output_images_folder, i))
 
         print("Case #%d is processed" % i)
 
