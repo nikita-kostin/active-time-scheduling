@@ -1,9 +1,19 @@
 # -*- coding: utf-8 -*-
+from enum import Enum
 from scipy.optimize import linprog
 from typing import Dict, List, Tuple
 
 from models import JobWithMultipleIntervals, Schedule, TimeInterval
 from schedulers import AbstractScheduler
+
+
+class LinearProgrammingMethod(Enum):
+    highs_ds = 'highs-ds'
+    highs_ipm = 'highs-ipm'
+    highs = 'highs'
+    interior_point = 'interior-point'
+    revised_simplex = 'revised simplex'
+    simplex = 'simplex'
 
 
 class LinearProgrammingArbitraryPreemptionScheduler(AbstractScheduler):
@@ -54,7 +64,12 @@ class LinearProgrammingArbitraryPreemptionScheduler(AbstractScheduler):
         return c, A_ub, b_ub
 
     @classmethod
-    def process(cls, max_concurrency: int, jobs: List[JobWithMultipleIntervals]) -> Schedule:
+    def process(
+            cls,
+            max_concurrency: int,
+            jobs: List[JobWithMultipleIntervals],
+            method: LinearProgrammingMethod = LinearProgrammingMethod.interior_point
+    ) -> Schedule:
         var_counter = 0
 
         t_to_var = {}
@@ -71,7 +86,7 @@ class LinearProgrammingArbitraryPreemptionScheduler(AbstractScheduler):
 
         c, A_ub, b_ub = cls._create_linear_program(max_concurrency, jobs, var_counter, t_to_var, js_to_var)
 
-        result = linprog(c, A_ub=A_ub, b_ub=b_ub)
+        result = linprog(c, A_ub=A_ub, b_ub=b_ub, method=method.value)
 
         if result.status != 0:
             return Schedule(False, None, None)
