@@ -6,6 +6,7 @@ from models import JobWithMultipleIntervals, Schedule
 
 
 def create_image_from_schedule(
+        max_concurrency: int,
         jobs: List[JobWithMultipleIntervals],
         schedule: Schedule,
         output_images_path: str
@@ -14,6 +15,8 @@ def create_image_from_schedule(
     max_t = max([interval.end for job in jobs for interval in job.intervals]) + 1
 
     fig, gnt = plt.subplots()
+
+    gnt.title.set_text("Schedule for max_concurrency=%d" % max_concurrency)
 
     gnt.set_xlim(0, (max_t + 1) * 10 + 20)
     gnt.set_ylim(0, max_n * 10 + 20)

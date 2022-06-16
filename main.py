@@ -112,7 +112,12 @@ def main() -> None:
             if os.path.isdir(args.output_images_folder) is False:
                 os.mkdir(args.output_images_folder)
 
-            create_image_from_schedule(jobs, schedule, "%s/case_%d.png" % (args.output_images_folder, i))
+            create_image_from_schedule(
+                max_concurrency,
+                jobs,
+                schedule,
+                "%s/case_%d.png" % (args.output_images_folder, i)
+            )
 
         print("Case #%d is processed" % i)
 
