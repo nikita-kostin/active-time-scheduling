@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import math
 from enum import Enum
 from scipy.optimize import linprog
 from typing import Dict, List, Tuple
@@ -94,5 +95,38 @@ class LinearProgrammingArbitraryPreemptionScheduler(AbstractScheduler):
         return Schedule(
             True,
             [TimeInterval(t, t + 1 - result.x[t_var]) for t, t_var in t_to_var.items()],
+            None,
+        )
+
+
+class LinearProgrammingRoundedScheduler(LinearProgrammingArbitraryPreemptionScheduler):
+
+    @classmethod
+    def process(
+            cls,
+            max_concurrency: int,
+            jobs: List[JobWithMultipleIntervals],
+            method: LinearProgrammingMethod = LinearProgrammingMethod.interior_point
+    ) -> Schedule:
+        schedule = super().process(max_concurrency, jobs, method)
+
+        deadlines = [max([interval.end for interval in job.intervals]) for job in jobs]
+
+        i = 0
+        active_timestamps = set()
+
+        for deadline in sorted(deadlines):
+            duration_sum = 0
+
+            while i < len(schedule.active_time_slots) and schedule.active_time_slots[i].end <= deadline:
+                duration_sum += (schedule.active_time_slots[i].end - schedule.active_time_slots[i].start)
+                i += 1
+
+            for t in range(deadline, deadline - math.ceil(duration_sum), -1):
+                active_timestamps.add(t)
+
+        return Schedule(
+            schedule.all_jobs_scheduled,
+            list(cls._merge_active_timestamps(active_timestamps)),
             None,
         )
