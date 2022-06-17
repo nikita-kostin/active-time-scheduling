@@ -110,7 +110,10 @@ class LinearProgrammingRoundedScheduler(LinearProgrammingArbitraryPreemptionSche
     ) -> Schedule:
         schedule = super().process(max_concurrency, jobs, method)
 
-        deadlines = [max([interval.end for interval in job.intervals]) for job in jobs]
+        if schedule.all_jobs_scheduled is False:
+            return Schedule(False, None, None)
+
+        deadlines = set([max([interval.end for interval in job.intervals]) + 1 for job in jobs])
 
         i = 0
         active_timestamps = set()
@@ -122,11 +125,11 @@ class LinearProgrammingRoundedScheduler(LinearProgrammingArbitraryPreemptionSche
                 duration_sum += (schedule.active_time_slots[i].end - schedule.active_time_slots[i].start)
                 i += 1
 
-            for t in range(deadline, deadline - math.ceil(duration_sum), -1):
+            for t in range(deadline - 1, deadline - 1 - math.ceil(duration_sum), -1):
                 active_timestamps.add(t)
 
         return Schedule(
-            schedule.all_jobs_scheduled,
+            True,
             list(cls._merge_active_timestamps(active_timestamps)),
             None,
         )
