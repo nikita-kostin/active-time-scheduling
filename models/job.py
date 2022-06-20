@@ -25,8 +25,7 @@ class JobWithMultipleIntervals(object):
         self.duration = duration
 
     def __str__(self) -> str:
-        return "JobWithMultipleIntervals(id={0}, intervals={1}, duration={2})".format(
-            self.id,
+        return "JobWithMultipleIntervals(intervals={0}, duration={1})".format(
             self.intervals,
             self.duration
         )
@@ -54,8 +53,7 @@ class Job(JobWithMultipleIntervals):
         return self.intervals[0].end
 
     def __str__(self) -> str:
-        return "Job(id={0}, release_time={1}, deadline={2}, duration={3})".format(
-            self.id,
+        return "Job(release_time={0}, deadline={1}, duration={2})".format(
             self.release_time,
             self.deadline,
             self.duration,
@@ -70,4 +68,4 @@ class Job(JobWithMultipleIntervals):
         return (self.release_time, self.deadline) < (other.release_time, other.deadline)
 
     def __hash__(self) -> int:
-        return hash((self.release_time, self.deadline))
+        return self.id

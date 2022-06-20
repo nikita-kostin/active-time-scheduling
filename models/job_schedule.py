@@ -32,4 +32,4 @@ class JobSchedule(object):
         return (self.execution_start, self.execution_end) < (other.execution_start, other.execution_end)
 
     def __hash__(self) -> int:
-        return hash((self.execution_start, self.execution_end))
+        return self.job.id

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from abc import ABC, abstractmethod
 from typing import Dict, Iterable, List, Set
+from queue import PriorityQueue
 
 from models import Job, JobSchedule, Schedule, TimeInterval
 from schedulers import AbstractScheduler
@@ -35,30 +36,6 @@ class AbstractUnitJobsScheduler(AbstractScheduler, ABC):
             cls._init_for_timestamp(js.execution_end - 1, t_to_count, t_to_node)
 
             t_to_node[js.execution_end].unite_with(t_to_node[js.execution_end - 1])
-
-    @staticmethod
-    def _get_jobs_for_timestamp(
-            max_concurrency: int,
-            t: int,
-            available_jss: Set[JobSchedule],
-            deadline_to_jss: Dict[int, Set[JobSchedule]],
-    ):
-        for js in deadline_to_jss[t]:
-            available_jss.remove(js)
-
-            js.execution_start = js.execution_end = t
-            yield js
-
-        for _ in range(max_concurrency - len(deadline_to_jss[t])):
-            if not available_jss:
-                break
-
-            js = available_jss.pop()
-
-            deadline_to_jss[js.execution_end].remove(js)
-
-            js.execution_start = js.execution_end = t
-            yield js
 
     @classmethod
     @abstractmethod
@@ -113,17 +90,45 @@ class UnitJobsSchedulerNLogN(AbstractUnitJobsScheduler):
         deadlines = sorted(deadline_to_jss.keys())
 
         i = 0
-        available_jss = set()
+        used = set()
+        available_jss = PriorityQueue()
 
         for t in deadlines:
             if not deadline_to_jss[t]:
                 continue
 
             while i < len(jss_sorted_by_release_time) and jss_sorted_by_release_time[i].execution_start <= t:
-                available_jss.add(jss_sorted_by_release_time[i])
+                js = jss_sorted_by_release_time[i]
+                available_jss.put((js.execution_end, js))
                 i += 1
 
-            yield from cls._get_jobs_for_timestamp(max_concurrency, t, available_jss, deadline_to_jss)
+            for js in deadline_to_jss[t]:
+                used.add(js)
+
+                js.execution_start = js.execution_end = t
+                yield js
+
+            for _ in range(max_concurrency - len(deadline_to_jss[t])):
+                js = None
+
+                while True:
+                    if available_jss.empty() is True:
+                        break
+
+                    _, js = available_jss.get()
+                    if js in used:
+                        js = None
+                        continue
+
+                    break
+
+                if js is None:
+                    break
+
+                deadline_to_jss[js.execution_end].remove(js)
+
+                js.execution_start = js.execution_end = t
+                yield js
 
     @classmethod
     def _get_active_time_slots(cls, job_schedules: List[JobSchedule]) -> Iterable[TimeInterval]:
@@ -163,19 +168,49 @@ class UnitJobsSchedulerT(AbstractUnitJobsScheduler):
             release_time_to_jss.setdefault(js.execution_start, [])
             release_time_to_jss[js.execution_start].append(js)
 
-            deadline_to_jss.setdefault(js.execution_end, set())
-            deadline_to_jss[js.execution_end].add(js)
+            deadline_to_jss.setdefault(js.execution_end, [])
+            deadline_to_jss[js.execution_end].append(js)
 
-        available_jss = set()
+        release_time_to_idx = {}
+        deadline_to_idx = {}
+        deadlines = []
+        t_to_count = {}
+        t_to_node = {}
 
         for t in range(max_t):
-            for js in release_time_to_jss.get(t, []):
-                available_jss.add(js)
+            if t in release_time_to_jss:
+                release_time_to_idx[t] = len(deadlines)
+            if t in deadline_to_jss:
+                deadline_to_idx[t] = len(deadlines)
 
-            if not deadline_to_jss.get(t, []):
-                continue
+                deadlines.append(t)
 
-            yield from cls._get_jobs_for_timestamp(max_concurrency, t, available_jss, deadline_to_jss)
+                t_to_count[t] = 0
+                t_to_node[t] = DisjointSetNode(-t)
+
+        for deadline in deadlines:
+            used = False
+
+            for js in deadline_to_jss[deadline]:
+                rounded_release_time = deadlines[release_time_to_idx[js.execution_start]]
+
+                t = -t_to_node[rounded_release_time].root().value
+
+                while t_to_count[t] == max_concurrency:
+                    next_deadline = deadlines[deadline_to_idx[t] + 1]
+                    t_to_node[t].unite_with(t_to_node[next_deadline])
+                    t = -t_to_node[t].root().value
+
+                js.execution_start = js.execution_end = t
+                yield js
+
+                if t == deadline:
+                    used = True
+
+                t_to_count[t] += 1
+
+            if used is False:
+                t_to_count[deadline] = max_concurrency
 
     @classmethod
     def _get_active_time_slots(cls, job_schedules: List[JobSchedule]) -> Iterable[TimeInterval]:

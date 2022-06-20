@@ -15,17 +15,20 @@ class AbstractScheduler(ABC):
         active_time_slot_end = None
 
         for start, end in active_time_slots:
-            if active_time_slot_start is None or active_time_slot_end is None:
+            if active_time_slot_start is None:
                 active_time_slot_start = start
                 active_time_slot_end = end
                 continue
 
-            if active_time_slot_start <= start <= active_time_slot_end:
+            if active_time_slot_start <= start <= active_time_slot_end + 1:
                 active_time_slot_end = max(active_time_slot_end, end)
             else:
                 yield TimeInterval(active_time_slot_start, active_time_slot_end)
                 active_time_slot_start = start
                 active_time_slot_end = end
+
+        if active_time_slot_start is not None:
+            yield TimeInterval(active_time_slot_start, active_time_slot_end)
 
     @staticmethod
     def _merge_active_timestamps(active_timestamps: Set[int]) -> Iterable[TimeInterval]:
