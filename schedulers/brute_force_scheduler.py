@@ -22,7 +22,7 @@ class BruteForceScheduler(FlowScheduler):
             if t in active_timestamps:
                 self._open_time_slot(t, jobs, graph)
 
-        flow_value, _ = maximum_flow(graph, 0, 1 + len(jobs) + max_t)
+        flow_value, _ = maximum_flow(graph, 0, 1 + len(jobs) + max_t, flow_func=self.method)
 
         return flow_value == duration_sum
 
