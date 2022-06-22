@@ -4,11 +4,11 @@ from enum import Enum
 from scipy.optimize import linprog
 from typing import Dict, List, Tuple
 
-from models import JobWithMultipleIntervals, Schedule, TimeInterval
+from models import Job, JobWithMultipleIntervals, Schedule, TimeInterval
 from schedulers import AbstractScheduler
 
 
-class LinearProgrammingMethod(Enum):
+class LinearProgrammingMethod(str, Enum):
     highs_ds = 'highs-ds'
     highs_ipm = 'highs-ipm'
     highs = 'highs'
@@ -18,6 +18,9 @@ class LinearProgrammingMethod(Enum):
 
 
 class LinearProgrammingArbitraryPreemptionScheduler(AbstractScheduler):
+
+    def __init__(self, method: LinearProgrammingMethod = LinearProgrammingMethod.revised_simplex) -> None:
+        self.method = method
 
     @staticmethod
     def _create_linear_program(
@@ -64,12 +67,10 @@ class LinearProgrammingArbitraryPreemptionScheduler(AbstractScheduler):
 
         return c, A_ub, b_ub
 
-    @classmethod
     def process(
-            cls,
+            self,
             max_concurrency: int,
             jobs: List[JobWithMultipleIntervals],
-            method: LinearProgrammingMethod = LinearProgrammingMethod.interior_point
     ) -> Schedule:
         var_counter = 0
 
@@ -85,30 +86,32 @@ class LinearProgrammingArbitraryPreemptionScheduler(AbstractScheduler):
                     js_to_var[(job.id, t)] = var_counter
                     var_counter += 1
 
-        c, A_ub, b_ub = cls._create_linear_program(max_concurrency, jobs, var_counter, t_to_var, js_to_var)
+        c, A_ub, b_ub = self._create_linear_program(max_concurrency, jobs, var_counter, t_to_var, js_to_var)
 
-        result = linprog(c, A_ub=A_ub, b_ub=b_ub, method=method.value)
+        result = linprog(c, A_ub=A_ub, b_ub=b_ub, method=self.method)
 
         if result.status != 0:
             return Schedule(False, None, None)
 
         return Schedule(
             True,
-            [TimeInterval(t, t + 1 - result.x[t_var]) for t, t_var in t_to_var.items()],
+            list(filter(
+                lambda x: x.end - x.start > 1e-7,
+                [TimeInterval(t, t + 1 - result.x[t_var]) for t, t_var in t_to_var.items()]
+            )),
             None,
         )
 
 
 class LinearProgrammingRoundedScheduler(LinearProgrammingArbitraryPreemptionScheduler):
 
-    @classmethod
     def process(
-            cls,
+            self,
             max_concurrency: int,
-            jobs: List[JobWithMultipleIntervals],
+            jobs: List[Job],
             method: LinearProgrammingMethod = LinearProgrammingMethod.interior_point
     ) -> Schedule:
-        schedule = super().process(max_concurrency, jobs, method)
+        schedule = super(LinearProgrammingRoundedScheduler, self).process(max_concurrency, jobs)
 
         if schedule.all_jobs_scheduled is False:
             return Schedule(False, None, None)
@@ -130,6 +133,6 @@ class LinearProgrammingRoundedScheduler(LinearProgrammingArbitraryPreemptionSche
 
         return Schedule(
             True,
-            list(cls._merge_active_timestamps(active_timestamps)),
+            list(self._merge_active_timestamps(active_timestamps)),
             None,
         )
