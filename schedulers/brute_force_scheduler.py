@@ -3,7 +3,7 @@ from typing import List, Set
 
 from models import Job, Schedule
 from schedulers import FlowScheduler
-from utils import MaximumFlow
+from utils import FordFulkerson
 
 
 class BruteForceScheduler(FlowScheduler):
@@ -23,7 +23,7 @@ class BruteForceScheduler(FlowScheduler):
             if t in active_timestamps:
                 cls._open_time_slot(t, jobs, graph, c)
 
-        maximum_flow = MaximumFlow(graph, c, 0, 1 + len(jobs) + max_t)
+        maximum_flow = FordFulkerson(graph, c, 0, 1 + len(jobs) + max_t)
 
         return maximum_flow.process() == duration_sum
 

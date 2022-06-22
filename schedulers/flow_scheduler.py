@@ -3,7 +3,7 @@ from typing import Dict, List, Set, Tuple
 
 from models import Job, Schedule
 from schedulers import AbstractScheduler
-from utils import MaximumFlow
+from utils import FordFulkerson
 
 
 class FlowScheduler(AbstractScheduler):
@@ -72,7 +72,7 @@ class FlowScheduler(AbstractScheduler):
 
         duration_sum = sum([job.duration for job in jobs])
 
-        maximum_flow = MaximumFlow(graph, c, 0, 1 + len(jobs) + max_t)
+        maximum_flow = FordFulkerson(graph, c, 0, 1 + len(jobs) + max_t)
         if maximum_flow.process() < duration_sum:
             return Schedule(False, None, None)
 

@@ -2,7 +2,7 @@
 from typing import Dict, List, Set, Tuple
 
 
-class MaximumFlow(object):
+class FordFulkerson(object):
 
     def __init__(self, graph: List[Set[int]], c: Dict[Tuple[int, int], int], s: int, t: int) -> None:
         self.graph = graph
@@ -37,6 +37,9 @@ class MaximumFlow(object):
         return 0
 
     def process(self) -> int:
+        if self.s == self.t:
+            return 0
+
         ans = 0
         f = dict()
 
