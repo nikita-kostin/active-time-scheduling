@@ -13,14 +13,14 @@ class TestFlowScheduler(object):
     @pytest.mark.repeat(1000)
     def test_against_brute_force(self) -> None:
         max_duration = randint(1, 4)
-        max_t = randint(4, 10)
+        max_t = randint(4, 8)
         max_concurrency = randint(1, 3)
         jobs_count = randint(max(1, max_t // max_duration // 2), max_t // max_duration * max_concurrency)
 
         jobs = list(islice(JobsGenerator(max_duration, max_t), jobs_count))
 
-        schedule_a = BruteForceScheduler.process(max_concurrency, jobs)
-        schedule_b = FlowScheduler.process(max_concurrency, jobs)
+        schedule_a = BruteForceScheduler().process(max_concurrency, jobs)
+        schedule_b = FlowScheduler().process(max_concurrency, jobs)
 
         expected = schedule_a.all_jobs_scheduled
         actual = schedule_b.all_jobs_scheduled
@@ -36,7 +36,7 @@ class TestFlowScheduler(object):
         rigid_jobs = [Job(2, 11, 10) for _ in range(9)]
         jobs = [Job(1, 21, 10)] + unit_length_jobs + rigid_jobs
 
-        schedule = FlowScheduler.process(10, jobs)
+        schedule = FlowScheduler().process(10, jobs)
         active_time_slots_count = sum([ts.end - ts.start + 1 for ts in schedule.active_time_slots])
 
         assert schedule.all_jobs_scheduled is True, jobs

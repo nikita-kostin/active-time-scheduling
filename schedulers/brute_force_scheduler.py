@@ -1,34 +1,32 @@
 # -*- coding: utf-8 -*-
+from networkx.algorithms.flow import maximum_flow
 from typing import List, Set
 
 from models import Job, Schedule
 from schedulers import FlowScheduler
-from utils import FordFulkerson
 
 
 class BruteForceScheduler(FlowScheduler):
 
-    @classmethod
     def _is_feasible(
-            cls,
+            self,
             max_concurrency: int,
             max_t: int,
             jobs: List[Job],
             duration_sum: int,
             active_timestamps: Set[int],
     ) -> bool:
-        graph, c = cls._create_initial_graph_and_costs(max_concurrency, max_t, jobs)
+        graph = self._create_initial_graph(max_concurrency, max_t, jobs)
 
         for t in range(max_t):
             if t in active_timestamps:
-                cls._open_time_slot(t, jobs, graph, c)
+                self._open_time_slot(t, jobs, graph)
 
-        maximum_flow = FordFulkerson(graph, c, 0, 1 + len(jobs) + max_t)
+        flow_value, _ = maximum_flow(graph, 0, 1 + len(jobs) + max_t)
 
-        return maximum_flow.process() == duration_sum
+        return flow_value == duration_sum
 
-    @classmethod
-    def process(cls, max_concurrency: int, jobs: List[Job]) -> Schedule:
+    def process(self, max_concurrency: int, jobs: List[Job]) -> Schedule:
         max_t = max([job.deadline for job in jobs]) + 1
         duration_sum = sum([job.duration for job in jobs])
 
@@ -37,7 +35,7 @@ class BruteForceScheduler(FlowScheduler):
             for t in range(job.release_time, job.deadline + 1):
                 active_timestamps.add(t)
 
-        if cls._is_feasible(max_concurrency, max_t, jobs, duration_sum, active_timestamps) is False:
+        if self._is_feasible(max_concurrency, max_t, jobs, duration_sum, active_timestamps) is False:
             return Schedule(False, None, None)
 
         for bitmask in range(2 ** max_t):
@@ -50,11 +48,11 @@ class BruteForceScheduler(FlowScheduler):
             if len(candidate_active_timestamps) > len(active_timestamps):
                 continue
 
-            if cls._is_feasible(max_concurrency, max_t, jobs, duration_sum, candidate_active_timestamps) is True:
+            if self._is_feasible(max_concurrency, max_t, jobs, duration_sum, candidate_active_timestamps) is True:
                 active_timestamps = candidate_active_timestamps
 
         return Schedule(
             True,
-            list(cls._merge_active_timestamps(active_timestamps)),
+            list(self._merge_active_timestamps(active_timestamps)),
             None,
         )

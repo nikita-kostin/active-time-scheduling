@@ -33,8 +33,8 @@ class TestUnitJobsScheduler(object):
 
         self._compare_schedules(
             jobs,
-            BruteForceScheduler.process(max_concurrency, jobs),
-            scheduler_b.process(max_concurrency, jobs),
+            BruteForceScheduler().process(max_concurrency, jobs),
+            scheduler_b().process(max_concurrency, jobs),
         )
 
     @pytest.mark.repeat(1000)

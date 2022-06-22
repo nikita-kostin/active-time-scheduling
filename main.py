@@ -77,7 +77,7 @@ def process_case(solver: Scheduler, max_concurrency: int, jobs: List[Job]) -> Sc
         Scheduler.linear_programming_arbitrary_preemption_scheduler: LinearProgrammingArbitraryPreemptionScheduler,
         Scheduler.matching_scheduler: MatchingScheduler,
         Scheduler.unit_jobs_scheduler: UnitJobsScheduler,
-    }[solver].process(max_concurrency, jobs)
+    }[solver]().process(max_concurrency, jobs)
 
 
 def main() -> None:

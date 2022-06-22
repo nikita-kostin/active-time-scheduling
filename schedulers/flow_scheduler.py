@@ -1,92 +1,90 @@
 # -*- coding: utf-8 -*-
-from typing import Dict, List, Set, Tuple
+from enum import Enum
+from networkx import DiGraph
+from networkx.algorithms.flow import maximum_flow, edmonds_karp, preflow_push, dinitz
+from typing import List
 
 from models import Job, Schedule
 from schedulers import AbstractScheduler
-from utils import FordFulkerson
+
+
+class FlowMethod(Enum):
+    edmonds_karp = edmonds_karp
+    preflow_push = preflow_push
+    dinitz = dinitz
 
 
 class FlowScheduler(AbstractScheduler):
 
+    def __init__(self, method: FlowMethod = preflow_push) -> None:
+        self.method = method
+
     @staticmethod
-    def _create_initial_graph_and_costs(
+    def _create_initial_graph(
             max_concurrency: int,
             max_t: int,
             jobs: List[Job],
-    ) -> Tuple[List[Set[int]], Dict[Tuple[int, int], int]]:
-        graph = []
-        c = {}
-
-        for _ in range(1 + len(jobs) + max_t + 1):
-            graph.append(set())
+    ) -> DiGraph:
+        graph = DiGraph()
 
         for i, job in enumerate(jobs):
             u, v = 0, 1 + i
 
-            AbstractScheduler._add_edge(u, v, graph)
-
-            c[(u, v)] = job.duration
+            graph.add_edge(u, v, capacity=job.duration)
 
         for t in range(max_t):
             u = 1 + len(jobs) + t
             v = 1 + len(jobs) + max_t
 
-            AbstractScheduler._add_edge(u, v, graph)
+            graph.add_edge(u, v, capacity=max_concurrency)
 
-            c[(u, v)] = max_concurrency
-
-        return graph, c
+        return graph
 
     @staticmethod
-    def _open_time_slot(t: int, jobs: List[Job], graph: List[Set[int]], c: Dict[Tuple[int, int], int]) -> None:
+    def _open_time_slot(t: int, jobs: List[Job], graph: DiGraph) -> None:
         for i, job in enumerate(jobs):
             if job.release_time <= t <= job.deadline:
                 u = 1 + i
                 v = 1 + len(jobs) + t
 
-                graph[u].add(v)
-                graph[v].add(u)
-
-                c[(u, v)] = 1
+                graph.add_edge(u, v, capacity=1)
 
     @staticmethod
-    def _close_time_slot(t: int, jobs: List[Job], graph: List[Set[int]], c: Dict[Tuple[int, int], int]) -> None:
+    def _close_time_slot(t: int, jobs: List[Job], graph: DiGraph) -> None:
         for i, job in enumerate(jobs):
             if job.release_time <= t <= job.deadline:
                 u = 1 + i
                 v = 1 + len(jobs) + t
 
-                graph[u].remove(v)
-                graph[v].remove(u)
+                graph.remove_edge(u, v)
 
-                c.pop((u, v))
-
-    @classmethod
-    def process(cls, max_concurrency: int, jobs: List[Job]) -> Schedule:
+    def process(self, max_concurrency: int, jobs: List[Job]) -> Schedule:
         max_t = max([job.deadline for job in jobs]) + 1
-
-        graph, c = cls._create_initial_graph_and_costs(max_concurrency, max_t, jobs)
-
-        for t in range(max_t):
-            FlowScheduler._open_time_slot(t, jobs, graph, c)
-
         duration_sum = sum([job.duration for job in jobs])
 
-        maximum_flow = FordFulkerson(graph, c, 0, 1 + len(jobs) + max_t)
-        if maximum_flow.process() < duration_sum:
+        graph = self._create_initial_graph(max_concurrency, max_t, jobs)
+
+        for t in range(max_t):
+            self._open_time_slot(t, jobs, graph)
+
+        flow_value, _ = maximum_flow(graph, 0, 1 + len(jobs) + max_t)
+
+        if flow_value < duration_sum:
             return Schedule(False, None, None)
 
         active_timestamps = set()
 
         for t in range(max_t):
-            FlowScheduler._close_time_slot(t, jobs, graph, c)
+            self._close_time_slot(t, jobs, graph)
 
-            if maximum_flow.process() < duration_sum:
-                FlowScheduler._open_time_slot(t, jobs, graph, c)
+            flow_value, _ = maximum_flow(graph, 0, 1 + len(jobs) + max_t)
+
+            if flow_value < duration_sum:
+                self._open_time_slot(t, jobs, graph)
                 active_timestamps.add(t)
 
         return Schedule(
             True,
-            list(cls._merge_active_timestamps(active_timestamps)),
+            list(self._merge_active_timestamps(active_timestamps)),
             None,
         )
