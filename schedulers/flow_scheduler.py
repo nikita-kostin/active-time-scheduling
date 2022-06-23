@@ -6,12 +6,14 @@ from typing import List
 
 from models import Job, Schedule
 from schedulers import AbstractScheduler
+from utils import ford_fulkerson
 
 
 class FlowMethod(Enum):
     edmonds_karp = edmonds_karp
     preflow_push = preflow_push
     dinitz = dinitz
+    ford_fulkerson = ford_fulkerson
 
 
 class FlowScheduler(AbstractScheduler):

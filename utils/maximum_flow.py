@@ -1,55 +1,68 @@
 # -*- coding: utf-8 -*-
-from typing import Dict, List, Set, Tuple
+from copy import deepcopy
+from networkx import DiGraph
+from typing import Any, Dict
 
 
 class FordFulkerson(object):
 
-    def __init__(self, graph: List[Set[int]], c: Dict[Tuple[int, int], int], s: int, t: int) -> None:
+    def __init__(self, graph: DiGraph) -> None:
         self.graph = graph
-        self.c = c
-        self.s = s
-        self.t = t
 
-    def _find_augmenting_path(self, u: int, pc: int, used: List[bool], f: Dict[Tuple[int, int], int]) -> int:
-        if u == self.t:
+    @staticmethod
+    def _find_augmenting_path(r: DiGraph, u: Any, t: Any, pc: int, used: Dict[Any, bool]) -> int:
+        if u == t:
             return pc
 
         used[u] = True
 
-        for v in self.graph[u]:
-            self.c.setdefault((u, v), 0)
-            f.setdefault((u, v), 0)
-            f.setdefault((v, u), 0)
+        for v in r[u]:
+            ec = r[u][v]['capacity'] - r[u][v]['flow']
 
-            ec = self.c[(u, v)] - f[(u, v)]
-
-            if used[v] or ec == 0:
+            if used.get(v, False) is True or ec == 0:
                 continue
 
-            a = self._find_augmenting_path(v, min(pc, ec), used, f)
+            a = FordFulkerson._find_augmenting_path(r, v, t, min(pc, ec), used)
 
-            f[(u, v)] += a
-            f[(v, u)] -= a
+            r[u][v]['flow'] += a
+            r[v][u]['flow'] -= a
 
             if a > 0:
                 return a
 
         return 0
 
-    def process(self) -> int:
-        if self.s == self.t:
-            return 0
+    def _create_residual_network(self) -> DiGraph:
+        r = deepcopy(self.graph)
+        r.graph['flow_value'] = 0
 
-        ans = 0
-        f = dict()
+        for u, v in r.edges:
+            if u not in self.graph[v]:
+                r.add_edge(v, u, capacity=0)
+
+            r[u][v]['flow'] = 0
+            r[v][u]['flow'] = 0
+
+        return r
+
+    def process(self, s: Any, t: Any) -> DiGraph:
+        r = self._create_residual_network()
+
+        if s == t:
+            return r
 
         while True:
-            used = [False] * len(self.graph)
-            a = self._find_augmenting_path(self.s, int(1e9), used, f)
+            used = {}
+            a = self._find_augmenting_path(r, s, t, int(1e9), used)
+
+            r.graph['flow_value'] += a
 
             if a == 0:
                 break
 
-            ans += a
+        return r
 
-        return ans
+
+def ford_fulkerson(graph: DiGraph, s: Any, t: Any, *args, **kwargs) -> DiGraph:
+    ff = FordFulkerson(graph)
+    return ff.process(s, t)
