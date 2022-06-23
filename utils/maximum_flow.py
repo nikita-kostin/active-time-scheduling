@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-from copy import deepcopy
 from networkx import DiGraph
+from networkx.algorithms.flow import build_residual_network
 from typing import Any, Dict
 
 
@@ -32,21 +32,17 @@ class FordFulkerson(object):
 
         return 0
 
-    def _create_residual_network(self) -> DiGraph:
-        r = deepcopy(self.graph)
+    def _build_residual_network(self) -> DiGraph:
+        r = build_residual_network(self.graph, 'capacity')
         r.graph['flow_value'] = 0
 
         for u, v in r.edges:
-            if u not in self.graph[v]:
-                r.add_edge(v, u, capacity=0)
-
             r[u][v]['flow'] = 0
-            r[v][u]['flow'] = 0
 
         return r
 
     def process(self, s: Any, t: Any) -> DiGraph:
-        r = self._create_residual_network()
+        r = self._build_residual_network()
 
         if s == t:
             return r
