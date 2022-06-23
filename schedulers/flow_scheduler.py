@@ -1,7 +1,14 @@
 # -*- coding: utf-8 -*-
 from enum import Enum
 from networkx import DiGraph
-from networkx.algorithms.flow import maximum_flow, edmonds_karp, preflow_push, dinitz
+from networkx.algorithms.flow import (
+    maximum_flow,
+    edmonds_karp,
+    shortest_augmenting_path,
+    preflow_push,
+    dinitz,
+    boykov_kolmogorov,
+)
 from typing import List
 
 from models import Job, Schedule
@@ -11,8 +18,10 @@ from utils import ford_fulkerson
 
 class FlowMethod(Enum):
     edmonds_karp = edmonds_karp
+    shortest_augmenting_path = shortest_augmenting_path
     preflow_push = preflow_push
     dinitz = dinitz
+    boykov_kolmogorov = boykov_kolmogorov
     ford_fulkerson = ford_fulkerson
 
 
