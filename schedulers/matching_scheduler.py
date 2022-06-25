@@ -21,8 +21,6 @@ class MatchingScheduler(AbstractScheduler):
 
         matching = max_weight_matching(graph, maxcardinality=True)
 
-        print(matching)
-
         scheduled_jobs = set()
         active_timestamps = set()
         for u, v in matching:
