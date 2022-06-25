@@ -46,11 +46,6 @@ class AbstractScheduler(ABC):
         if active_time_slot_start is not None:
             yield TimeInterval(active_time_slot_start, max_t - 1)
 
-    @staticmethod
-    def _add_edge(u: int, v: int, graph: List[Set[int]]) -> None:
-        graph[u].add(v)
-        graph[v].add(u)
-
     @classmethod
     @abstractmethod
     def process(cls, max_concurrency: int, jobs: List[Job]) -> Schedule:

@@ -1,34 +1,33 @@
 # -*- coding: utf-8 -*-
+from networkx import Graph, max_weight_matching
 from typing import List
 
 from models import JobWithMultipleIntervals, Schedule
 from schedulers import AbstractScheduler
-from utils import MaximumMatching
 
 
 class MatchingScheduler(AbstractScheduler):
 
     @classmethod
     def process(cls, max_concurrency: int, jobs: List[JobWithMultipleIntervals]) -> Schedule:
-        max_t = max([interval.end for job in jobs for interval in job.intervals]) + 1
-
-        graph = []
-        for i in range(len(jobs) + 2 * max_t):
-            graph.append(set())
+        graph = Graph()
 
         for i, job in enumerate(jobs):
             for interval in job.intervals:
                 for t in range(interval.start, interval.end + 1):
-                    cls._add_edge(i, len(jobs) + 2 * t, graph)
-                    cls._add_edge(i, len(jobs) + 2 * t + 1, graph)
-                    cls._add_edge(len(jobs) + 2 * t, len(jobs) + 2 * t + 1, graph)
+                    graph.add_edge(i, len(jobs) + 2 * t, weight=2)
+                    graph.add_edge(i, len(jobs) + 2 * t + 1, weight=2)
+                    graph.add_edge(len(jobs) + 2 * t, len(jobs) + 2 * t + 1, weight=1)
 
-        m = MaximumMatching.process(graph)
+        matching = max_weight_matching(graph, maxcardinality=True)
+
+        print(matching)
 
         scheduled_jobs = set()
         active_timestamps = set()
-        for u, v in m.items():
-            if 0 <= u <= len(jobs) - 1 and len(jobs) <= v:
+        for u, v in matching:
+            u, v = min(u, v), max(u, v)
+            if u < len(jobs) <= v:
                 scheduled_jobs.add(u)
                 active_timestamps.add((v - len(jobs)) // 2)
 
