@@ -9,7 +9,7 @@ from tests.generators import JobsGenerator
 
 class TestLinearProgrammingScheduler(object):
 
-    @pytest.mark.repeat(10000)
+    @pytest.mark.repeat(1000)
     def test_against_brute_force(self) -> None:
         max_duration = randint(1, 4)
         max_t = randint(4, 8)
