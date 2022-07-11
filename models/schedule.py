@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from typing import List, Optional
 
-from models import JobSchedule, TimeInterval
+from models import JobScheduleSI, TimeInterval
 
 
 class Schedule(object):
@@ -10,7 +10,7 @@ class Schedule(object):
             self,
             all_jobs_scheduled: bool,
             active_time_slots: Optional[List[TimeInterval]],
-            job_schedules: Optional[List[JobSchedule]],
+            job_schedules: Optional[List[JobScheduleSI]],
     ) -> None:
         self.all_jobs_scheduled = all_jobs_scheduled
         self.active_time_slots = active_time_slots

@@ -2,7 +2,7 @@
 from numpy import argmax
 from typing import Iterable, List, Optional
 
-from models import Batch, BatchJob, Schedule
+from models import BatchJobSchedule, BatchJob, Schedule
 from schedulers import AbstractScheduler
 
 
@@ -13,7 +13,7 @@ class BatchScheduler(AbstractScheduler):
             jobs: List[BatchJob],
             batch_duration: int,
             max_concurrency: int,
-    ) -> Iterable[Batch]:
+    ) -> Iterable[BatchJobSchedule]:
         jobs = sorted(jobs)
         used = set()
 
@@ -25,7 +25,7 @@ class BatchScheduler(AbstractScheduler):
                     continue
 
                 if batch is None:
-                    batch = Batch(set(), job.release_time, job.release_time + batch_duration - 1)
+                    batch = BatchJobSchedule(set(), job.release_time, job.release_time + batch_duration - 1)
 
                 if job.release_time <= batch.execution_start and batch.execution_end <= job.deadline:
                     batch.jobs.add(job)
@@ -37,7 +37,7 @@ class BatchScheduler(AbstractScheduler):
             yield batch
 
     @staticmethod
-    def _push_forward(i: int, batches: List[Batch], batch_duration: int, number_of_machines: int) -> None:
+    def _push_forward(i: int, batches: List[BatchJobSchedule], batch_duration: int, number_of_machines: int) -> None:
         updated_execution_start = batches[i].execution_start
 
         for job in batches[i].jobs:
@@ -55,7 +55,7 @@ class BatchScheduler(AbstractScheduler):
         batches[i].execution_end = updated_execution_start + batch_duration - 1
 
     @staticmethod
-    def _move_back(i: int, batches: List[Batch], job: BatchJob, max_concurrency: int) -> Optional[int]:
+    def _move_back(i: int, batches: List[BatchJobSchedule], job: BatchJob, max_concurrency: int) -> Optional[int]:
         batches[i].jobs.remove(job)
 
         preceding_deadline_available_jobs = [
@@ -89,7 +89,7 @@ class BatchScheduler(AbstractScheduler):
             max_concurrency: int,
             batch_duration: int,
             number_of_machines: int,
-    ) -> Optional[List[Batch]]:
+    ) -> Optional[List[BatchJobSchedule]]:
         if min([job.deadline - job.release_time + 1 for job in jobs]) < batch_duration:
             return None
 

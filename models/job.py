@@ -39,9 +39,17 @@ class JobWithSingleInterval(AbstractJob, ABC):
     def release_time(self) -> int:
         return self.intervals[0].start
 
+    @release_time.setter
+    def release_time(self, release_time: int) -> None:
+        self.intervals[0].start = release_time
+
     @property
     def deadline(self) -> int:
         return self.intervals[0].end
+
+    @deadline.setter
+    def deadline(self, deadline: int) -> None:
+        self.intervals[0].end = deadline
 
     def __eq__(self, other: 'Job') -> bool:
         return (self.release_time, self.deadline, self.id) == (other.release_time, other.deadline)

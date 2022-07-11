@@ -1,12 +1,30 @@
 # -*- coding: utf-8 -*-
 from functools import total_ordering
-from typing import Set
+from typing import List, Set
 
-from models import BatchJob, Job
+from models import BatchJob, Job, TimeInterval
+
+
+class AbstractJobSchedule(object):
+
+    def __init__(self, job: Job, execution_intervals: List[TimeInterval]) -> None:
+        self.job = job
+        self.execution_intervals = execution_intervals
+
+
+class JobScheduleMI(AbstractJobSchedule):
+
+    def __str__(self) -> str:
+        return "JobScheduleMI(job={0}, execution_intervals={1})".format(
+            self.job,
+            self.execution_intervals
+        )
+
+    __repr__ = __str__
 
 
 @total_ordering
-class JobSchedule(object):
+class JobScheduleSI(AbstractJobSchedule):
 
     def __init__(
             self,
@@ -14,12 +32,26 @@ class JobSchedule(object):
             execution_start: int,
             execution_end: int,
     ) -> None:
-        self.job = job
-        self.execution_start = execution_start
-        self.execution_end = execution_end
+        super(JobScheduleSI, self).__init__(job, [TimeInterval(execution_start, execution_end)])
+
+    @property
+    def execution_start(self) -> int:
+        return self.execution_intervals[0].start
+
+    @execution_start.setter
+    def execution_start(self, execution_start: int) -> None:
+        self.execution_intervals[0].start = execution_start
+
+    @property
+    def execution_end(self) -> int:
+        return self.execution_intervals[0].end
+
+    @execution_end.setter
+    def execution_end(self, execution_end: int) -> None:
+        self.execution_intervals[0].end = execution_end
 
     def __str__(self) -> str:
-        return "JobSchedule(job={0}, execution_start={1}, execution_end={2})".format(
+        return "JobScheduleSI(job={0}, execution_start={1}, execution_end={2})".format(
             self.job,
             self.execution_start,
             self.execution_end,
@@ -27,10 +59,10 @@ class JobSchedule(object):
 
     __repr__ = __str__
 
-    def __eq__(self, other: 'JobSchedule') -> bool:
+    def __eq__(self, other: 'JobScheduleSI') -> bool:
         return (self.execution_start, self.execution_end) == (other.execution_start, other.execution_end)
 
-    def __lt__(self, other: 'JobSchedule') -> bool:
+    def __lt__(self, other: 'JobScheduleSI') -> bool:
         return (self.execution_start, self.execution_end) < (other.execution_start, other.execution_end)
 
     def __hash__(self) -> int:
@@ -38,7 +70,7 @@ class JobSchedule(object):
 
 
 @total_ordering
-class Batch(object):
+class BatchJobSchedule(object):
 
     def __init__(self, jobs: Set[BatchJob], execution_start: int, execution_end: int) -> None:
         self.jobs = jobs
@@ -58,8 +90,8 @@ class Batch(object):
 
     __repr__ = __str__
 
-    def __eq__(self, other: 'Batch') -> bool:
+    def __eq__(self, other: 'BatchJobSchedule') -> bool:
         return (self.execution_start, -len(self.jobs)) == (other.execution_start, -len(other.jobs))
 
-    def __lt__(self, other: 'Batch') -> bool:
+    def __lt__(self, other: 'BatchJobSchedule') -> bool:
         return (self.execution_start, -len(self.jobs)) < (other.execution_start, -len(other.jobs))
