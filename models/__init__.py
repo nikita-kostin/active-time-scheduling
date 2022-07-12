@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from .job import BatchJob, Job, JobWithMultipleIntervals, TimeInterval
-from .job_schedule import BatchJobSchedule, JobScheduleSI
+from .job_schedule import BatchJobSchedule, JobScheduleMI, JobScheduleSI
 from .schedule import Schedule
 
 __all__ = [
@@ -8,6 +8,7 @@ __all__ = [
     BatchJob,
     Job,
     JobWithMultipleIntervals,
+    JobScheduleMI,
     JobScheduleSI,
     Schedule,
     TimeInterval,

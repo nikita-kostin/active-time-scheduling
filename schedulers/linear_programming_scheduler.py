@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 import math
 from enum import Enum
-from scipy.optimize import linprog
-from typing import Dict, List, Tuple
+from networkx import maximum_flow
+from scipy.optimize import OptimizeResult, linprog
+from typing import Dict, Iterable, List, Tuple
 
-from models import Job, JobWithMultipleIntervals, Schedule, TimeInterval
-from schedulers import AbstractScheduler
+from models import Job, JobScheduleMI, JobWithMultipleIntervals, Schedule, TimeInterval
+from schedulers import AbstractScheduler, FlowScheduler
+from schedulers.flow_scheduler import FlowMethod
 
 
 class LinearProgrammingMethod(str, Enum):
@@ -18,6 +20,8 @@ class LinearProgrammingMethod(str, Enum):
 
 
 class LinearProgrammingArbitraryPreemptionScheduler(AbstractScheduler):
+
+    EPS = 1e-7
 
     def __init__(self, method: LinearProgrammingMethod = LinearProgrammingMethod.revised_simplex) -> None:
         self.method = method
@@ -67,6 +71,25 @@ class LinearProgrammingArbitraryPreemptionScheduler(AbstractScheduler):
 
         return c, A_ub, b_ub
 
+    def _create_job_schedules(
+            self,
+            jobs: List[JobWithMultipleIntervals],
+            js_to_var: Dict[Tuple[int, int], int],
+            optimize_result: OptimizeResult,
+    ) -> Iterable[JobScheduleMI]:
+        for job in jobs:
+            job_schedule = JobScheduleMI(job, [])
+
+            for interval in job.intervals:
+                for t in range(interval.start, interval.end + 1):
+                    if (job.id, t) in js_to_var and optimize_result.x[js_to_var[(job.id, t)]] > self.EPS:
+                        job_schedule.execution_intervals.append(
+                            TimeInterval(t, t + optimize_result.x[js_to_var[(job.id, t)]])
+                        )
+
+            yield job_schedule
+
+
     def process(
             self,
             max_concurrency: int,
@@ -96,20 +119,20 @@ class LinearProgrammingArbitraryPreemptionScheduler(AbstractScheduler):
         return Schedule(
             True,
             list(filter(
-                lambda x: x.end - x.start > 1e-7,
+                lambda x: x.end - x.start > self.EPS,
                 [TimeInterval(t, t + 1 - result.x[t_var]) for t, t_var in t_to_var.items()]
             )),
-            None,
+            list(self._create_job_schedules(jobs, js_to_var, result)),
         )
 
 
-class LinearProgrammingRoundedScheduler(LinearProgrammingArbitraryPreemptionScheduler):
+class LinearProgrammingRoundedScheduler(LinearProgrammingArbitraryPreemptionScheduler, FlowScheduler):
 
     def process(
             self,
             max_concurrency: int,
             jobs: List[Job],
-            method: LinearProgrammingMethod = LinearProgrammingMethod.interior_point
+            lp_method: LinearProgrammingMethod = LinearProgrammingMethod.interior_point
     ) -> Schedule:
         schedule = super(LinearProgrammingRoundedScheduler, self).process(max_concurrency, jobs)
 
@@ -131,8 +154,17 @@ class LinearProgrammingRoundedScheduler(LinearProgrammingArbitraryPreemptionSche
             for t in range(deadline - 1, deadline - 1 - math.ceil(duration_sum), -1):
                 active_timestamps.add(t)
 
+        max_t = max(active_timestamps) + 1
+        graph = self._create_initial_graph(max_concurrency, max_t, jobs)
+
+        for t in range(max_t):
+            if t in active_timestamps:
+                self._open_time_slot(t, jobs, graph)
+
+        _, flow_dict = maximum_flow(graph, 0, 1 + len(jobs) + max_t, flow_func=FlowMethod.preflow_push)
+
         return Schedule(
             True,
             list(self._merge_active_timestamps(active_timestamps)),
-            None,
+            list(FlowScheduler._create_job_schedules(jobs, flow_dict)),
         )
