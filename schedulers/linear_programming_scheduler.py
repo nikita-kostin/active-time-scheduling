@@ -118,10 +118,10 @@ class LinearProgrammingArbitraryPreemptionScheduler(AbstractScheduler):
 
         return Schedule(
             True,
-            list(filter(
+            list(sorted(filter(
                 lambda x: x.end - x.start > self.EPS,
                 [TimeInterval(t, t + 1 - result.x[t_var]) for t, t_var in t_to_var.items()]
-            )),
+            ))),
             list(self._create_job_schedules(jobs, js_to_var, result)),
         )
 

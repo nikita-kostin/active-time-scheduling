@@ -5,6 +5,7 @@ from itertools import count
 from typing import List, Optional
 
 
+@total_ordering
 class TimeInterval(object):
 
     def __init__(self, start: int, end: int) -> None:
@@ -15,6 +16,12 @@ class TimeInterval(object):
         return "TimeInterval(start={0}, end={1})".format(self.start, self.end)
 
     __repr__ = __str__
+
+    def __eq__(self, other: 'TimeInterval') -> bool:
+        return (self.start, self.end) == (other.start, other.end)
+
+    def __lt__(self, other: 'TimeInterval') -> bool:
+        return (self.start, self.end) < (other.start, other.end)
 
 
 class AbstractJob(ABC):
@@ -52,10 +59,10 @@ class JobWithSingleInterval(AbstractJob, ABC):
         self.intervals[0].end = deadline
 
     def __eq__(self, other: 'Job') -> bool:
-        return (self.release_time, self.deadline, self.id) == (other.release_time, other.deadline)
+        return (self.release_time, self.deadline, self.id) == (other.release_time, other.deadline, other.id)
 
     def __lt__(self, other: 'Job') -> bool:
-        return (self.release_time, self.deadline, self.id) < (other.release_time, other.deadline)
+        return (self.release_time, self.deadline, self.id) < (other.release_time, other.deadline, other.id)
 
     def __hash__(self) -> int:
         return hash((self.release_time, self.deadline, self.id))
