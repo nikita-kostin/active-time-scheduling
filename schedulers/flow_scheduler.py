@@ -11,7 +11,7 @@ from networkx.algorithms.flow import (
 )
 from typing import Dict, Iterable, List
 
-from models import Job, JobScheduleMI, Schedule
+from models import Job, JobPoolSI, JobScheduleMI, Schedule
 from schedulers import AbstractScheduler
 from utils import ford_fulkerson
 
@@ -81,16 +81,16 @@ class FlowScheduler(AbstractScheduler):
 
             yield JobScheduleMI(job, list(AbstractScheduler._merge_active_timestamps(job_active_timestamps)))
 
-    def process(self, max_concurrency: int, jobs: List[Job]) -> Schedule:
-        max_t = max([job.deadline for job in jobs]) + 1
-        duration_sum = sum([job.duration for job in jobs])
+    def process(self, job_pool: JobPoolSI, max_concurrency: int) -> Schedule:
+        max_t = max([job.deadline for job in job_pool.jobs]) + 1
+        duration_sum = sum([job.duration for job in job_pool.jobs])
 
-        graph = self._create_initial_graph(max_concurrency, max_t, jobs)
+        graph = self._create_initial_graph(max_concurrency, max_t, job_pool.jobs)
 
         for t in range(max_t):
-            self._open_time_slot(t, jobs, graph)
+            self._open_time_slot(t, job_pool.jobs, graph)
 
-        flow_value, _ = maximum_flow(graph, 0, 1 + len(jobs) + max_t, flow_func=self.flow_method)
+        flow_value, _ = maximum_flow(graph, 0, 1 + len(job_pool.jobs) + max_t, flow_func=self.flow_method)
 
         if flow_value < duration_sum:
             return Schedule(False, None, None)
@@ -98,18 +98,18 @@ class FlowScheduler(AbstractScheduler):
         active_timestamps = set()
 
         for t in range(max_t):
-            self._close_time_slot(t, jobs, graph)
+            self._close_time_slot(t, job_pool.jobs, graph)
 
-            flow_value, _ = maximum_flow(graph, 0, 1 + len(jobs) + max_t, flow_func=self.flow_method)
+            flow_value, _ = maximum_flow(graph, 0, 1 + len(job_pool.jobs) + max_t, flow_func=self.flow_method)
 
             if flow_value < duration_sum:
-                self._open_time_slot(t, jobs, graph)
+                self._open_time_slot(t, job_pool.jobs, graph)
                 active_timestamps.add(t)
 
-        _, flow_dict = maximum_flow(graph, 0, 1 + len(jobs) + max_t, flow_func=self.flow_method)
+        _, flow_dict = maximum_flow(graph, 0, 1 + len(job_pool.jobs) + max_t, flow_func=self.flow_method)
 
         return Schedule(
             True,
             list(self._merge_active_timestamps(active_timestamps)),
-            list(self._create_job_schedules(jobs, flow_dict)),
+            list(self._create_job_schedules(job_pool.jobs, flow_dict)),
         )

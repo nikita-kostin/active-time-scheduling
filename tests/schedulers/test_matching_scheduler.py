@@ -3,11 +3,12 @@ import pytest
 from itertools import islice
 from random import randint
 
+from models import UnitJobPoolMI
 from schedulers import BruteForceScheduler, MatchingScheduler, UnitJobsSchedulerT
 from tests.generators import JobsGenerator
 
 
-class TestLinearProgrammingScheduler(object):
+class TestMatchingScheduler(object):
 
     @pytest.mark.repeat(1000)
     def test_against_brute_force(self) -> None:
@@ -15,9 +16,11 @@ class TestLinearProgrammingScheduler(object):
         jobs_count = randint(max_t // 2, max_t * 2)
 
         jobs = list(islice(JobsGenerator(1, max_t), jobs_count))
+        job_pool = UnitJobPoolMI()
+        job_pool.jobs = jobs
 
-        schedule_a = BruteForceScheduler().process(2, jobs)
-        schedule_b = MatchingScheduler().process(2, jobs)
+        schedule_a = BruteForceScheduler().process(job_pool, 2)
+        schedule_b = MatchingScheduler().process(job_pool)
 
         expected = schedule_a.all_jobs_scheduled
         actual = schedule_b.all_jobs_scheduled
@@ -34,9 +37,11 @@ class TestLinearProgrammingScheduler(object):
         jobs_count = randint(max_t // 2, max_t * 2)
 
         jobs = list(islice(JobsGenerator(1, max_t), jobs_count))
+        job_pool = UnitJobPoolMI()
+        job_pool.jobs = jobs
 
-        schedule_a = UnitJobsSchedulerT().process(2, jobs)
-        schedule_b = MatchingScheduler().process(2, jobs)
+        schedule_a = UnitJobsSchedulerT().process(job_pool, 2)
+        schedule_b = MatchingScheduler().process(job_pool)
 
         expected = schedule_a.all_jobs_scheduled
         actual = schedule_b.all_jobs_scheduled

@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 from abc import ABC, abstractmethod
-from typing import Dict, Iterable, List, Set
+from typing import Dict, Iterable, List
 from queue import PriorityQueue
 
-from models import Job, JobScheduleSI, Schedule, TimeInterval
+from models import Job, UnitJobPoolSI, JobScheduleSI, Schedule, TimeInterval
 from schedulers import AbstractScheduler
 from utils import DisjointSetNode
 
@@ -53,14 +53,14 @@ class AbstractUnitJobsScheduler(AbstractScheduler, ABC):
         pass
 
     @classmethod
-    def process(cls, max_concurrency: int, jobs: List[Job]) -> Schedule:
-        job_schedules = [JobScheduleSI(job, job.release_time, job.deadline) for job in jobs]
+    def process(cls, job_pool: UnitJobPoolSI, max_concurrency: int) -> Schedule:
+        job_schedules = [JobScheduleSI(job, job.release_time, job.deadline) for job in job_pool.jobs]
 
         job_schedules = list(cls._phase_one(max_concurrency, job_schedules))
         job_schedules = list(cls._phase_two(max_concurrency, job_schedules))
 
         return Schedule(
-            len(job_schedules) == len(jobs),
+            len(job_schedules) == job_pool.size,
             list(cls._get_active_time_slots(job_schedules)),
             job_schedules,
         )

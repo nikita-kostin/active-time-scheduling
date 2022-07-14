@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-from abc import ABC, abstractmethod
-from typing import Iterable, List, Set, Tuple
+from abc import ABC
+from typing import Iterable, Set, Tuple
 
-from models import Job, Schedule, TimeInterval
+from models import TimeInterval
 
 
 class AbstractScheduler(ABC):
@@ -45,8 +45,3 @@ class AbstractScheduler(ABC):
 
         if active_time_slot_start is not None:
             yield TimeInterval(active_time_slot_start, max_t - 1)
-
-    @classmethod
-    @abstractmethod
-    def process(cls, max_concurrency: int, jobs: List[Job]) -> Schedule:
-        pass

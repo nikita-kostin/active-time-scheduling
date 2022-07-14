@@ -2,7 +2,7 @@
 from numpy import argmax
 from typing import Iterable, List, Optional
 
-from models import BatchJobSchedule, BatchJob, Schedule
+from models import BatchJobSchedule, BatchJob, FixedLengthJobPoolSI, Schedule
 from schedulers import AbstractScheduler
 
 
@@ -10,11 +10,10 @@ class BatchScheduler(AbstractScheduler):
 
     @staticmethod
     def _construct_initial_schedule(
-            jobs: List[BatchJob],
-            batch_duration: int,
+            job_pool: FixedLengthJobPoolSI,
             max_concurrency: int,
     ) -> Iterable[BatchJobSchedule]:
-        jobs = sorted(jobs)
+        jobs = sorted(job_pool.jobs)
         used = set()
 
         while len(used) != len(jobs):
@@ -25,7 +24,7 @@ class BatchScheduler(AbstractScheduler):
                     continue
 
                 if batch is None:
-                    batch = BatchJobSchedule(set(), job.release_time, job.release_time + batch_duration - 1)
+                    batch = BatchJobSchedule(set(), job.release_time, job.release_time + job_pool.duration - 1)
 
                 if job.release_time <= batch.execution_start and batch.execution_end <= job.deadline:
                     batch.jobs.add(job)
@@ -85,15 +84,14 @@ class BatchScheduler(AbstractScheduler):
 
     @staticmethod
     def _compute_for_multiple_machines(
-            jobs: List[BatchJob],
+            job_pool: FixedLengthJobPoolSI,
             max_concurrency: int,
-            batch_duration: int,
             number_of_machines: int,
     ) -> Optional[List[BatchJobSchedule]]:
-        if min([job.deadline - job.release_time + 1 for job in jobs]) < batch_duration:
+        if min([job.deadline - job.release_time + 1 for job in job_pool.jobs]) < job_pool.duration:
             return None
 
-        batches = sorted(BatchScheduler._construct_initial_schedule(jobs, batch_duration, max_concurrency))
+        batches = sorted(BatchScheduler._construct_initial_schedule(job_pool, max_concurrency))
 
         i = 0
 
@@ -101,10 +99,10 @@ class BatchScheduler(AbstractScheduler):
             if i == len(batches):
                 break
 
-            BatchScheduler._push_forward(i, batches, batch_duration, number_of_machines)
+            BatchScheduler._push_forward(i, batches, job_pool.duration, number_of_machines)
 
             jobs_to_move_back = [
-                job for job in batches[i].jobs if batches[i].execution_start + batch_duration - 1 > job.deadline
+                job for job in batches[i].jobs if batches[i].execution_start + job_pool.duration - 1 > job.deadline
             ]
 
             if not jobs_to_move_back:
@@ -119,9 +117,8 @@ class BatchScheduler(AbstractScheduler):
 
         return [batch for batch in batches if len(batch.jobs) != 0]
 
-    @classmethod
-    def process(cls, max_concurrency: int, jobs: List[BatchJob], batch_duration: int) -> Schedule:
-        batches = cls._compute_for_multiple_machines(jobs, max_concurrency, batch_duration, 1)
+    def process(self, job_pool: FixedLengthJobPoolSI, max_concurrency: int) -> Schedule:
+        batches = self._compute_for_multiple_machines(job_pool, max_concurrency, 1)
 
         if batches is None:
             return Schedule(False, None, None)
@@ -130,6 +127,6 @@ class BatchScheduler(AbstractScheduler):
 
         return Schedule(
             True,
-            list(cls._merge_active_time_slots(active_time_slots)),
+            list(self._merge_active_time_slots(active_time_slots)),
             batches,
         )

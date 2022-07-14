@@ -2,7 +2,7 @@
 from networkx.algorithms.flow import maximum_flow
 from typing import Dict, List, Set, Tuple
 
-from models import Job, Schedule
+from models import Job, JobPoolMI, Schedule
 from schedulers import FlowScheduler
 
 
@@ -23,16 +23,16 @@ class BruteForceScheduler(FlowScheduler):
 
         return maximum_flow(graph, 0, 1 + len(jobs) + max_t, flow_func=self.flow_method)
 
-    def process(self, max_concurrency: int, jobs: List[Job]) -> Schedule:
-        max_t = max([job.deadline for job in jobs]) + 1
-        duration_sum = sum([job.duration for job in jobs])
+    def process(self, job_pool: JobPoolMI, max_concurrency: int) -> Schedule:
+        max_t = max([job.deadline for job in job_pool.jobs]) + 1
+        duration_sum = sum([job.duration for job in job_pool.jobs])
 
         active_timestamps = set()
-        for job in jobs:
+        for job in job_pool.jobs:
             for t in range(job.release_time, job.deadline + 1):
                 active_timestamps.add(t)
 
-        flow_value, _ = self._compute_flow(max_concurrency, max_t, jobs, active_timestamps)
+        flow_value, _ = self._compute_flow(max_concurrency, max_t, job_pool.jobs, active_timestamps)
 
         if flow_value != duration_sum:
             return Schedule(False, None, None)
@@ -49,11 +49,13 @@ class BruteForceScheduler(FlowScheduler):
             if len(candidate_active_timestamps) > len(active_timestamps):
                 continue
 
-            flow_value, flow_dict = self._compute_flow(max_concurrency, max_t, jobs, candidate_active_timestamps)
+            flow_value, flow_dict = self._compute_flow(
+                max_concurrency, max_t, job_pool.jobs, candidate_active_timestamps
+            )
 
             if flow_value == duration_sum:
                 active_timestamps = candidate_active_timestamps
-                job_schedules = list(self._create_job_schedules(jobs, flow_dict))
+                job_schedules = list(self._create_job_schedules(job_pool.jobs, flow_dict))
 
         return Schedule(
             True,

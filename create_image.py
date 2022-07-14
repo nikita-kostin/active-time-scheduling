@@ -2,17 +2,17 @@
 import matplotlib.pyplot as plt
 from typing import List
 
-from models import JobWithMultipleIntervals, Schedule
+from models import JobMI, Schedule
 
 
 def create_image_from_schedule(
         max_concurrency: int,
-        jobs: List[JobWithMultipleIntervals],
+        jobs: List[JobMI],
         schedule: Schedule,
         output_images_path: str
 ) -> None:
     max_n = len(jobs)
-    max_t = max([interval.end for job in jobs for interval in job.intervals]) + 1
+    max_t = max([interval.end for job in jobs for interval in job.availability_intervals]) + 1
 
     fig, gnt = plt.subplots()
 
@@ -35,7 +35,7 @@ def create_image_from_schedule(
 
     for job in jobs:
         gnt.broken_barh(
-            [(interval.start * 10 + 15, (interval.end - interval.start + 1) * 10) for interval in job.intervals],
+            [(interval.start * 10 + 15, (interval.end - interval.start + 1) * 10) for interval in job.availability_intervals],
             (id_to_ymin[job.id], 8),
             facecolors='tab:red',
             alpha=0.2,

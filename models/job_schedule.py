@@ -2,12 +2,12 @@
 from functools import total_ordering
 from typing import List, Set
 
-from models import BatchJob, Job, TimeInterval
+from models import AbstractJob, BatchJob, TimeInterval
 
 
 class AbstractJobSchedule(object):
 
-    def __init__(self, job: Job, execution_intervals: List[TimeInterval]) -> None:
+    def __init__(self, job: AbstractJob, execution_intervals: List[TimeInterval]) -> None:
         self.job = job
         self.execution_intervals = execution_intervals
 
@@ -28,7 +28,7 @@ class JobScheduleSI(AbstractJobSchedule):
 
     def __init__(
             self,
-            job: Job,
+            job: AbstractJob,
             execution_start: int,
             execution_end: int,
     ) -> None:

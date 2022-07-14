@@ -3,6 +3,7 @@ import pytest
 from itertools import islice
 from random import randint
 
+from models import JobPoolSI
 from schedulers import (
     BruteForceScheduler,
     LinearProgrammingArbitraryPreemptionScheduler,
@@ -21,9 +22,11 @@ class TestLinearProgrammingScheduler(object):
         jobs_count = randint(max(1, max_t // max_duration // 2), max_t // max_duration * max_concurrency)
 
         jobs = list(islice(JobsGenerator(max_duration, max_t), jobs_count))
+        job_pool = JobPoolSI()
+        job_pool.jobs = jobs
 
-        schedule_a = BruteForceScheduler().process(max_concurrency, jobs)
-        schedule_b = LinearProgrammingRoundedScheduler().process(max_concurrency, jobs)
+        schedule_a = BruteForceScheduler().process(job_pool, max_concurrency)
+        schedule_b = LinearProgrammingRoundedScheduler().process(job_pool, max_concurrency)
 
         expected = schedule_a.all_jobs_scheduled
         actual = schedule_b.all_jobs_scheduled
@@ -42,9 +45,11 @@ class TestLinearProgrammingScheduler(object):
         jobs_count = randint(max(1, max_t // max_duration // 2), max_t // max_duration * max_concurrency)
 
         jobs = list(islice(JobsGenerator(max_duration, max_t), jobs_count))
+        job_pool = JobPoolSI()
+        job_pool.jobs = jobs
 
-        schedule_a = LinearProgrammingArbitraryPreemptionScheduler().process(max_concurrency, jobs)
-        schedule_b = LinearProgrammingRoundedScheduler().process(max_concurrency, jobs)
+        schedule_a = LinearProgrammingArbitraryPreemptionScheduler().process(job_pool, max_concurrency)
+        schedule_b = LinearProgrammingRoundedScheduler().process(job_pool, max_concurrency)
 
         expected = schedule_a.all_jobs_scheduled
         actual = schedule_b.all_jobs_scheduled
