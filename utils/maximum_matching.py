@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from copy import deepcopy
 from networkx import Graph
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, Optional, Set, Tuple
 from queue import Queue
 
 
@@ -13,7 +13,7 @@ class EdmondsBlossomMatching(object):
             b: int,
             child: int,
             blossom: Set[int],
-            base: List[int],
+            base: Dict[int, int],
             matching: Dict[int, int],
             p: Dict[int, int],
     ) -> None:
@@ -28,7 +28,7 @@ class EdmondsBlossomMatching(object):
     def _find_lowest_common_ancestor(
             a: int,
             b: int,
-            base: List[int],
+            base: Dict[int, int],
             matching: Dict[int, int],
             p: Dict[int, int],
     ) -> int:
@@ -51,7 +51,7 @@ class EdmondsBlossomMatching(object):
     def _find_path(root: int, g: Graph, matching: Dict[int, int]) -> Tuple[Dict[int, int], Optional[int]]:
         used = set()
         p = {}
-        base = [i for i in range(10000)]
+        base = {u: u for u in g.nodes}
 
         used.add(root)
         q = Queue()
