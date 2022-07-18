@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from copy import deepcopy
 from networkx import Graph
-from typing import Dict, Optional, Set, Tuple
+from typing import Any, Dict, Optional, Set, Tuple
 from queue import Queue
 
 
@@ -9,13 +9,13 @@ class EdmondsBlossomMatching(object):
 
     @staticmethod
     def _mark_path(
-            v: int,
-            b: int,
-            child: int,
-            blossom: Set[int],
-            base: Dict[int, int],
-            matching: Dict[int, int],
-            p: Dict[int, int],
+            v: Any,
+            b: Any,
+            child: Any,
+            blossom: Set[Any],
+            base: Dict[Any, Any],
+            matching: Dict[Any, Any],
+            p: Dict[Any, Any],
     ) -> None:
         while base[v] != b:
             blossom.add(base[v])
@@ -26,12 +26,12 @@ class EdmondsBlossomMatching(object):
 
     @staticmethod
     def _find_lowest_common_ancestor(
-            a: int,
-            b: int,
-            base: Dict[int, int],
-            matching: Dict[int, int],
-            p: Dict[int, int],
-    ) -> int:
+            a: Any,
+            b: Any,
+            base: Dict[Any, Any],
+            matching: Dict[Any, Any],
+            p: Dict[Any, Any],
+    ) -> Any:
         used = set()
 
         while True:
@@ -48,7 +48,7 @@ class EdmondsBlossomMatching(object):
             b = p[matching[b]]
 
     @staticmethod
-    def _find_path(root: int, g: Graph, matching: Dict[int, int]) -> Tuple[Dict[int, int], Optional[int]]:
+    def _find_path(root: Any, g: Graph, matching: Dict[Any, Any]) -> Tuple[Dict[Any, Any], Optional[Any]]:
         used = set()
         p = {}
         base = {u: u for u in g.nodes}
@@ -89,7 +89,7 @@ class EdmondsBlossomMatching(object):
         return p, None
 
     @staticmethod
-    def process(g: Graph, initial_matching: Optional[Dict[int, int]] = None) -> Dict[int, int]:
+    def process(g: Graph, initial_matching: Optional[Dict[Any, Any]] = None) -> Dict[Any, Any]:
         matching = {} if initial_matching is None else deepcopy(initial_matching)
 
         for u in g.nodes:
@@ -104,3 +104,78 @@ class EdmondsBlossomMatching(object):
                     v = ppv
 
         return matching
+
+
+class UpperDegreeConstrainedSubgraph(object):
+
+    @staticmethod
+    def construct_h(g: Graph, constraints: Dict[int, int]) -> Graph:
+        h = Graph()
+
+        for u in g.nodes:
+            for i in range(constraints[u]):
+                h.add_node("v_%s^%d" % (u, i))
+
+        for i, e in enumerate(g.edges):
+            u, v = e
+
+            h.add_node("u_{%s, %s}" % (u, v))
+            h.add_node("w_{%s, %s}" % (u, v))
+            h.add_edge("u_{%s, %s}" % (u, v), "w_{%s, %s}" % (u, v))
+
+            for j in range(constraints[u]):
+                h.add_edge("u_{%s, %s}" % (u, v), "v_%s^%d" % (u, j))
+            for j in range(constraints[v]):
+                h.add_edge("w_{%s, %s}" % (u, v), "v_%s^%d" % (v, j))
+
+        return h
+
+    @staticmethod
+    def construct_dcs(g: Graph, matching: Dict[Any, Any]) -> Dict[Any, Set[Any]]:
+        degree_constrained_subgraph = {}
+        for u in g.nodes:
+            degree_constrained_subgraph[u] = set()
+
+        for i, e in enumerate(g.edges):
+            u, v = e
+
+            if matching.get("u_{%s, %s}" % (u, v), '').startswith("v_") and matching.get("w_{%s, %s}" % (u, v), '').startswith("v_"):
+                degree_constrained_subgraph[u].add(v)
+                degree_constrained_subgraph[v].add(u)
+
+        return degree_constrained_subgraph
+
+    @staticmethod
+    def process(g: Graph, constraints: Dict[int, int]) -> Dict[Any, Set[Any]]:
+        h = Graph()
+
+        for u in g.nodes:
+            for i in range(constraints[u]):
+                h.add_node("v_%s^%d" % (u, i))
+
+        for i, e in enumerate(g.edges):
+            u, v = e
+
+            h.add_node("u_%d" % i)
+            h.add_node("w_%d" % i)
+            h.add_edge("u_%d" % i, "w_%d" % i)
+
+            for j in range(constraints[u]):
+                h.add_edge("u_%d" % i, "v_%s^%d" % (u, j))
+            for j in range(constraints[v]):
+                h.add_edge("w_%d" % i, "v_%s^%d" % (v, j))
+
+        matching = EdmondsBlossomMatching().process(h)
+
+        degree_constrained_subgraph = {}
+        for u in g.nodes:
+            degree_constrained_subgraph[u] = set()
+
+        for i, e in enumerate(g.edges):
+            u, v = e
+
+            if matching.get("u_%d" % i, '').startswith("v_") and matching.get("w_%d" % i, '').startswith("v_"):
+                degree_constrained_subgraph[u].add(v)
+                degree_constrained_subgraph[v].add(u)
+
+        return degree_constrained_subgraph

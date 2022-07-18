@@ -6,7 +6,7 @@ from .linear_programming_scheduler import (
     LinearProgrammingArbitraryPreemptionScheduler,
     LinearProgrammingRoundedScheduler,
 )
-from .matching_scheduler import MatchingScheduler
+from .matching_scheduler import MatchingScheduler, UpperDegreeConstrainedSubgraphScheduler
 from .unit_jobs_scheduler import UnitJobsScheduler, UnitJobsSchedulerNLogN, UnitJobsSchedulerT
 
 __all__ = [
@@ -19,4 +19,5 @@ __all__ = [
     UnitJobsScheduler,
     UnitJobsSchedulerNLogN,
     UnitJobsSchedulerT,
+    UpperDegreeConstrainedSubgraphScheduler,
 ]
