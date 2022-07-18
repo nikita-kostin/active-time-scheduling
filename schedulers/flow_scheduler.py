@@ -11,7 +11,7 @@ from networkx.algorithms.flow import (
 )
 from typing import Dict, Iterable, List
 
-from models import Job, JobPoolSI, JobScheduleMI, Schedule
+from models import Job, JobPoolSI, JobScheduleMI, Schedule, TimeInterval
 from schedulers import AbstractScheduler
 from utils import ford_fulkerson
 
@@ -113,3 +113,13 @@ class FlowScheduler(AbstractScheduler):
             list(self._merge_active_timestamps(active_timestamps)),
             list(self._create_job_schedules(job_pool.jobs, flow_dict)),
         )
+
+
+class FlowIntervalScheduler(AbstractScheduler):
+
+    def process(self, job_pool: JobPoolSI, max_concurrency: int) -> Schedule:
+        release_time_timestamps = [job.release_time for job in job_pool.jobs]
+        deadline_timestamps = [job.deadline for job in job_pool.jobs]
+
+        interval_timestamps = list(set(release_time_timestamps + deadline_timestamps))
+        intervals = [TimeInterval(interval_timestamps[i], interval_timestamps[i + 1]) for i in range(len(interval_timestamps))]

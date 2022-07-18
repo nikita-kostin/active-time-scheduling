@@ -3,8 +3,8 @@ import pytest
 from itertools import islice
 from random import randint
 
-from models import Job, JobPoolSI
-from schedulers import BruteForceScheduler, FlowScheduler
+from models import Job, JobPoolSI, UnitJobPoolSI
+from schedulers import BruteForceScheduler, FlowScheduler, UnitJobsSchedulerT, UpperDegreeConstrainedSubgraphScheduler
 from tests.generators import JobsGenerator
 
 
@@ -23,6 +23,50 @@ class TestFlowScheduler(object):
 
         schedule_a = BruteForceScheduler().process(job_pool, max_concurrency)
         schedule_b = FlowScheduler().process(job_pool, max_concurrency)
+
+        expected = schedule_a.all_jobs_scheduled
+        actual = schedule_b.all_jobs_scheduled
+        assert actual == expected, str(jobs)
+
+        if schedule_a.all_jobs_scheduled is True:
+            expected = sum([ts.end - ts.start + 1 for ts in schedule_a.active_time_slots])
+            actual = sum([ts.end - ts.start + 1 for ts in schedule_b.active_time_slots])
+            assert actual <= expected * 2, str(jobs)
+
+    @pytest.mark.repeat(1000)
+    def test_against_lazy_activation(self) -> None:
+        max_t = randint(15, 30)
+        max_concurrency = randint(1, 3)
+        jobs_count = randint(max_t // 2, max_t * 2)
+
+        jobs = list(islice(JobsGenerator(1, max_t), jobs_count))
+        job_pool = UnitJobPoolSI()
+        job_pool.jobs = jobs
+
+        schedule_a = UnitJobsSchedulerT().process(job_pool, max_concurrency)
+        schedule_b = FlowScheduler().process(job_pool, max_concurrency)
+
+        expected = schedule_a.all_jobs_scheduled
+        actual = schedule_b.all_jobs_scheduled
+        assert actual == expected, str(jobs)
+
+        if schedule_a.all_jobs_scheduled is True:
+            expected = sum([ts.end - ts.start + 1 for ts in schedule_a.active_time_slots])
+            actual = sum([ts.end - ts.start + 1 for ts in schedule_b.active_time_slots])
+            assert actual <= expected * 2, str(jobs)
+
+    @pytest.mark.repeat(1000)
+    def test_against_udcs(self) -> None:
+        max_duration = randint(5, 10)
+        max_t = randint(15, 30)
+        jobs_count = randint(max(1, max_t // max_duration // 2), max_t // max_duration * 2)
+
+        jobs = list(islice(JobsGenerator(1, max_t), jobs_count))
+        job_pool = JobPoolSI()
+        job_pool.jobs = jobs
+
+        schedule_a = UpperDegreeConstrainedSubgraphScheduler().process(job_pool)
+        schedule_b = FlowScheduler().process(job_pool, 2)
 
         expected = schedule_a.all_jobs_scheduled
         actual = schedule_b.all_jobs_scheduled

@@ -23,7 +23,7 @@ class LinearProgrammingArbitraryPreemptionScheduler(AbstractScheduler):
 
     EPS = 1e-7
 
-    def __init__(self, method: LinearProgrammingMethod = LinearProgrammingMethod.revised_simplex) -> None:
+    def __init__(self, method: LinearProgrammingMethod = LinearProgrammingMethod.highs) -> None:
         self.method = method
 
     @staticmethod
