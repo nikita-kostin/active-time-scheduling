@@ -17,6 +17,10 @@ class TimeInterval(object):
 
     __repr__ = __str__
 
+    @property
+    def duration(self) -> int:
+        return self.end - self.start + 1
+
     def __eq__(self, other: 'TimeInterval') -> bool:
         return (self.start, self.end) == (other.start, other.end)
 
