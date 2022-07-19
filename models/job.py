@@ -2,7 +2,7 @@
 from abc import ABC
 from functools import total_ordering
 from itertools import count
-from typing import List, Optional
+from typing import Iterator, List, Optional
 
 
 @total_ordering
@@ -26,6 +26,9 @@ class TimeInterval(object):
 
     def __lt__(self, other: 'TimeInterval') -> bool:
         return (self.start, self.end) < (other.start, other.end)
+
+    def __iter__(self) -> Iterator[int]:
+        return iter(range(int(self.start), int(self.end) + 1))
 
 
 class AbstractJob(ABC):

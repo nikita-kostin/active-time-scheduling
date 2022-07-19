@@ -6,6 +6,7 @@ from random import randint
 from models import Job, JobPoolSI, UnitJobPoolSI
 from schedulers import BruteForceScheduler, FlowScheduler, UnitJobsSchedulerT, UpperDegreeConstrainedSubgraphScheduler
 from tests.generators import JobsGenerator
+from tests.schedulers.common import check_2_approximation
 
 
 class TestFlowScheduler(object):
@@ -24,14 +25,7 @@ class TestFlowScheduler(object):
         schedule_a = BruteForceScheduler().process(job_pool, max_concurrency)
         schedule_b = FlowScheduler().process(job_pool, max_concurrency)
 
-        expected = schedule_a.all_jobs_scheduled
-        actual = schedule_b.all_jobs_scheduled
-        assert actual == expected, str(jobs)
-
-        if schedule_a.all_jobs_scheduled is True:
-            expected = sum([ts.end - ts.start + 1 for ts in schedule_a.active_time_slots])
-            actual = sum([ts.end - ts.start + 1 for ts in schedule_b.active_time_slots])
-            assert actual <= expected * 2, str(jobs)
+        check_2_approximation(schedule_a, schedule_b, job_pool, max_concurrency)
 
     @pytest.mark.repeat(1000)
     def test_against_lazy_activation(self) -> None:
@@ -46,14 +40,7 @@ class TestFlowScheduler(object):
         schedule_a = UnitJobsSchedulerT().process(job_pool, max_concurrency)
         schedule_b = FlowScheduler().process(job_pool, max_concurrency)
 
-        expected = schedule_a.all_jobs_scheduled
-        actual = schedule_b.all_jobs_scheduled
-        assert actual == expected, str(jobs)
-
-        if schedule_a.all_jobs_scheduled is True:
-            expected = sum([ts.end - ts.start + 1 for ts in schedule_a.active_time_slots])
-            actual = sum([ts.end - ts.start + 1 for ts in schedule_b.active_time_slots])
-            assert actual <= expected * 2, str(jobs)
+        check_2_approximation(schedule_a, schedule_b, job_pool, max_concurrency)
 
     @pytest.mark.repeat(1000)
     def test_against_udcs(self) -> None:
@@ -68,14 +55,7 @@ class TestFlowScheduler(object):
         schedule_a = UpperDegreeConstrainedSubgraphScheduler().process(job_pool)
         schedule_b = FlowScheduler().process(job_pool, 2)
 
-        expected = schedule_a.all_jobs_scheduled
-        actual = schedule_b.all_jobs_scheduled
-        assert actual == expected, str(jobs)
-
-        if schedule_a.all_jobs_scheduled is True:
-            expected = sum([ts.end - ts.start + 1 for ts in schedule_a.active_time_slots])
-            actual = sum([ts.end - ts.start + 1 for ts in schedule_b.active_time_slots])
-            assert actual <= expected * 2, str(jobs)
+        check_2_approximation(schedule_a, schedule_b, job_pool, 2)
 
     def test_tight_example(self) -> None:
         unit_length_jobs = [Job(1, 11, 1) for _ in range(10)]
@@ -85,7 +65,7 @@ class TestFlowScheduler(object):
         job_pool.jobs = jobs
 
         schedule = FlowScheduler().process(job_pool, 10)
-        active_time_slots_count = sum([ts.end - ts.start + 1 for ts in schedule.active_time_slots])
+        active_time_slots_count = sum([ts.end - ts.start + 1 for ts in schedule.active_time_intervals])
 
         assert schedule.all_jobs_scheduled is True, jobs
         assert active_time_slots_count == 20, active_time_slots_count

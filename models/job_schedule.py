@@ -11,6 +11,10 @@ class AbstractJobSchedule(object):
         self.job = job
         self.execution_intervals = execution_intervals
 
+    @property
+    def duration(self) -> int:
+        return sum(time_interval.duration for time_interval in self.execution_intervals)
+
 
 class JobScheduleMI(AbstractJobSchedule):
 

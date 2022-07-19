@@ -11,6 +11,7 @@ from schedulers import (
     UpperDegreeConstrainedSubgraphScheduler,
 )
 from tests.generators import JobsGenerator
+from tests.schedulers.common import check_equality
 
 
 class TestMatchingScheduler(object):
@@ -27,14 +28,7 @@ class TestMatchingScheduler(object):
         schedule_a = BruteForceScheduler().process(job_pool, 2)
         schedule_b = MatchingScheduler().process(job_pool)
 
-        expected = schedule_a.all_jobs_scheduled
-        actual = schedule_b.all_jobs_scheduled
-        assert actual == expected, str(jobs)
-
-        if schedule_a.all_jobs_scheduled is True:
-            expected = sum([ts.end - ts.start + 1 for ts in schedule_a.active_time_slots])
-            actual = sum([ts.end - ts.start + 1 for ts in schedule_b.active_time_slots])
-            assert actual == expected, str(jobs)
+        check_equality(schedule_a, schedule_b, job_pool, 2)
 
     @pytest.mark.repeat(1000)
     def test_matching_against_lazy_activation(self) -> None:
@@ -48,14 +42,7 @@ class TestMatchingScheduler(object):
         schedule_a = UnitJobsSchedulerT().process(job_pool, 2)
         schedule_b = MatchingScheduler().process(job_pool)
 
-        expected = schedule_a.all_jobs_scheduled
-        actual = schedule_b.all_jobs_scheduled
-        assert actual == expected, str(jobs)
-
-        if schedule_a.all_jobs_scheduled is True:
-            expected = sum([ts.end - ts.start + 1 for ts in schedule_a.active_time_slots])
-            actual = sum([ts.end - ts.start + 1 for ts in schedule_b.active_time_slots])
-            assert actual == expected, str(jobs)
+        check_equality(schedule_a, schedule_b, job_pool, 2)
 
     @pytest.mark.repeat(1000)
     def test_udcs_against_brute_force(self) -> None:
@@ -71,11 +58,4 @@ class TestMatchingScheduler(object):
         schedule_a = BruteForceScheduler().process(job_pool, 2)
         schedule_b = UpperDegreeConstrainedSubgraphScheduler().process(job_pool)
 
-        expected = schedule_a.all_jobs_scheduled
-        actual = schedule_b.all_jobs_scheduled
-        assert actual == expected, str(jobs)
-
-        if schedule_a.all_jobs_scheduled is True:
-            expected = sum([ts.end - ts.start + 1 for ts in schedule_a.active_time_slots])
-            actual = sum([ts.end - ts.start + 1 for ts in schedule_b.active_time_slots])
-            assert actual == expected, str(jobs)
+        check_equality(schedule_a, schedule_b, job_pool, max_concurrency)

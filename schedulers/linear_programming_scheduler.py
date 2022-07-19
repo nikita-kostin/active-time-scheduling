@@ -145,8 +145,8 @@ class LinearProgrammingRoundedScheduler(LinearProgrammingArbitraryPreemptionSche
         for deadline in sorted(deadlines):
             duration_sum = 0
 
-            while i < len(schedule.active_time_slots) and schedule.active_time_slots[i].end <= deadline:
-                duration_sum += (schedule.active_time_slots[i].end - schedule.active_time_slots[i].start)
+            while i < len(schedule.active_time_intervals) and schedule.active_time_intervals[i].end <= deadline:
+                duration_sum += (schedule.active_time_intervals[i].end - schedule.active_time_intervals[i].start)
                 i += 1
 
             for t in range(deadline - 1, deadline - 1 - math.ceil(duration_sum), -1):

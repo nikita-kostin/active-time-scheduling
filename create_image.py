@@ -41,8 +41,8 @@ def create_image_from_schedule(
             alpha=0.2,
         )
 
-    if schedule.active_time_slots is not None:
-        for time_interval in schedule.active_time_slots:
+    if schedule.active_time_intervals is not None:
+        for time_interval in schedule.active_time_intervals:
             gnt.axvspan(
                 time_interval.start * 10 + 15,
                 (time_interval.end + 1) * 10 + 15,
