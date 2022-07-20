@@ -2,7 +2,7 @@
 from abc import ABC
 from functools import total_ordering
 from itertools import count
-from typing import Iterator, List, Optional
+from typing import Iterator, List, Optional, Set
 
 
 @total_ordering
@@ -30,6 +30,55 @@ class TimeInterval(object):
     def __iter__(self) -> Iterator[int]:
         return iter(range(int(self.start), int(self.end) + 1))
 
+    @staticmethod
+    def merge_timestamps(timestamps: Set[int]) -> List['TimeInterval']:
+        if len(timestamps) == 0:
+            return []
+
+        time_intervals = []
+
+        min_t = min(timestamps)
+        max_t = max(timestamps)
+
+        time_interval_start = None
+
+        for t in range(min_t, max_t + 1):
+            if time_interval_start is None and t in timestamps:
+                time_interval_start = t
+            if time_interval_start is not None and t not in timestamps:
+                time_intervals.append(TimeInterval(time_interval_start, t - 1))
+                time_interval_start = None
+
+        if time_interval_start is not None:
+            time_intervals.append(TimeInterval(time_interval_start, max_t))
+
+        return time_intervals
+
+    @staticmethod
+    def merge_time_intervals(time_intervals: List['TimeInterval']) -> List['TimeInterval']:
+        time_intervals = sorted(time_intervals)
+
+        time_interval_start = None
+        time_interval_end = None
+
+        for time_interval in time_intervals:
+            if time_interval_start is None:
+                time_interval_start = time_interval.start
+                time_interval_end = time_interval.end
+                continue
+
+            if time_interval_start <= time_interval.start <= time_interval_end + 1:
+                time_interval_end = max(time_interval_end, time_interval.end)
+            else:
+                time_intervals.append(TimeInterval(time_interval_start, time_interval_end))
+                time_interval_start = time_interval.start
+                time_interval_end = time_interval.end
+
+        if time_interval_start is not None:
+            time_intervals.append(TimeInterval(time_interval_start, time_interval_end))
+
+        return time_intervals
+
 
 class AbstractJob(ABC):
     _id_iter = count()
@@ -38,6 +87,10 @@ class AbstractJob(ABC):
         self.id = next(self.__class__._id_iter)
         self.availability_intervals = availability_intervals
         self.duration = duration
+
+    @property
+    def length(self) -> int:
+        return sum(time_interval.duration for time_interval in self.availability_intervals)
 
     def __hash__(self) -> int:
         return self.id
