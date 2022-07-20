@@ -169,7 +169,6 @@ class FlowIntervalScheduler(AbstractFlowScheduler):
 
     @staticmethod
     def _create_initial_graph(
-            max_concurrency: int,
             intervals: List[TimeInterval],
             jobs: List[Job],
     ) -> DiGraph:
@@ -184,7 +183,7 @@ class FlowIntervalScheduler(AbstractFlowScheduler):
             u = 1 + len(jobs) + i
             v = 1 + len(jobs) + len(intervals)
 
-            graph.add_edge(u, v, capacity=max_concurrency * interval.duration)
+            graph.add_edge(u, v, capacity=0)
 
         return graph
 
@@ -223,6 +222,38 @@ class FlowIntervalScheduler(AbstractFlowScheduler):
     ) -> None:
         FlowIntervalScheduler._extend_interval(jobs, i, intervals, graph, max_concurrency, -delta)
 
+    @staticmethod
+    def _create_job_schedules(
+            jobs: List[Job],
+            intervals: List[TimeInterval],
+            flow_dict: Dict[int, Dict[int, int]],
+    ) -> Iterable[JobScheduleMI]:
+        time_within_interval = {}
+
+        for j, job in enumerate(jobs):
+            active_intervals = []
+
+            for i, interval in enumerate(intervals):
+                scheduled_time = flow_dict.get(1 + j, {}).get(1 + len(jobs) + i, 0)
+                if scheduled_time == 0:
+                    continue
+
+                time_within_interval.setdefault(i, 0)
+
+                time_from = time_within_interval[i]
+                time_within_interval[i] = (time_within_interval[i] + scheduled_time) % interval.duration
+                time_to = time_within_interval[i]
+
+                if time_to <= time_from:
+                    active_intervals.append((interval.start + time_from, interval.end))
+                    time_from = 0
+
+                if time_from != time_to:
+                    active_intervals.append((interval.start + time_from, interval.start + time_to - 1))
+
+            yield JobScheduleMI(job, list(AbstractScheduler._merge_active_time_slots(active_intervals)))
+
+
     def process(self, job_pool: JobPoolSI, max_concurrency: int) -> Schedule:
         duration_sum = sum([job.duration for job in job_pool.jobs])
 
@@ -234,7 +265,7 @@ class FlowIntervalScheduler(AbstractFlowScheduler):
             TimeInterval(timestamps[i], timestamps[i + 1] - 1) for i in range(len(timestamps) - 1)
         ]
 
-        graph = self._create_initial_graph(max_concurrency, intervals, job_pool.jobs)
+        graph = self._create_initial_graph(intervals, job_pool.jobs)
 
         for i, interval in enumerate(intervals):
             self._extend_interval(job_pool.jobs, i, intervals, graph, max_concurrency, interval.duration)
@@ -275,5 +306,5 @@ class FlowIntervalScheduler(AbstractFlowScheduler):
         return Schedule(
             True,
             list(self._merge_active_time_slots(active_intervals)),
-            None,
+            list(self._create_job_schedules(job_pool.jobs, intervals, flow_dict)),
         )
