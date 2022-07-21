@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 import pytest
-from itertools import islice
-from random import randint
+from numpy.random import randint
 from typing import Type
 
-from models import Job, JobPoolSI, UnitJobPoolSI
+from models import JobPoolSI
 from schedulers import (
     AbstractFlowScheduler,
     BruteForceScheduler,
@@ -13,8 +12,7 @@ from schedulers import (
     UnitJobsSchedulerT,
     UpperDegreeConstrainedSubgraphScheduler,
 )
-from tests.generators import JobsGenerator
-from tests.schedulers.common import check_2_approximation
+from tests.schedulers.common import check_2_approximation, generate_jobs_uniform_distribution
 
 
 class TestFlowScheduler(object):
@@ -22,14 +20,12 @@ class TestFlowScheduler(object):
     @pytest.mark.repeat(1000)
     @pytest.mark.parametrize('scheduler_b', [FlowIntervalScheduler, FlowScheduler])
     def test_against_brute_force(self, scheduler_b: Type[AbstractFlowScheduler]) -> None:
-        max_duration = randint(1, 4)
-        max_t = randint(4, 8)
-        max_concurrency = randint(1, 3)
-        jobs_count = randint(max(1, max_t // max_duration // 2), max_t // max_duration * max_concurrency)
+        max_length = randint(1, 5)
+        max_t = randint(4, 9)
+        max_concurrency = randint(1, 4)
+        number_of_jobs = randint(1, max_t // max_length * max_concurrency + 1)
 
-        jobs = list(islice(JobsGenerator(max_duration, max_t), jobs_count))
-        job_pool = JobPoolSI()
-        job_pool.jobs = jobs
+        job_pool = generate_jobs_uniform_distribution(number_of_jobs, max_t, (1, max_length), (1, max_length))
 
         schedule_a = BruteForceScheduler().process(job_pool, max_concurrency)
         schedule_b = scheduler_b().process(job_pool, max_concurrency)
@@ -39,13 +35,12 @@ class TestFlowScheduler(object):
     @pytest.mark.repeat(1000)
     @pytest.mark.parametrize('scheduler_b', [FlowIntervalScheduler, FlowScheduler])
     def test_against_lazy_activation(self, scheduler_b: Type[AbstractFlowScheduler]) -> None:
-        max_t = randint(15, 30)
-        max_concurrency = randint(1, 3)
-        jobs_count = randint(max_t // 2, max_t * 2)
+        max_length = randint(1, 5)
+        max_t = randint(15, 31)
+        max_concurrency = randint(1, 4)
+        number_of_jobs = randint(1, max_t * 2 + 1)
 
-        jobs = list(islice(JobsGenerator(1, max_t), jobs_count))
-        job_pool = UnitJobPoolSI()
-        job_pool.jobs = jobs
+        job_pool = generate_jobs_uniform_distribution(number_of_jobs, max_t, (1, max_length), (1, 1))
 
         schedule_a = UnitJobsSchedulerT().process(job_pool, max_concurrency)
         schedule_b = scheduler_b().process(job_pool, max_concurrency)
@@ -55,13 +50,11 @@ class TestFlowScheduler(object):
     @pytest.mark.repeat(1000)
     @pytest.mark.parametrize('scheduler_b', [FlowIntervalScheduler, FlowScheduler])
     def test_against_udcs(self, scheduler_b: Type[AbstractFlowScheduler]) -> None:
-        max_duration = randint(5, 10)
-        max_t = randint(15, 30)
-        jobs_count = randint(max(1, max_t // max_duration // 2), max_t // max_duration * 2)
+        max_length = randint(5, 11)
+        max_t = randint(15, 31)
+        number_of_jobs = randint(1, max_t // max_length * 2 + 1)
 
-        jobs = list(islice(JobsGenerator(1, max_t), jobs_count))
-        job_pool = JobPoolSI()
-        job_pool.jobs = jobs
+        job_pool = generate_jobs_uniform_distribution(number_of_jobs, max_t, (1, max_length), (1, max_length))
 
         schedule_a = UpperDegreeConstrainedSubgraphScheduler().process(job_pool)
         schedule_b = scheduler_b().process(job_pool, 2)
@@ -70,14 +63,16 @@ class TestFlowScheduler(object):
 
     @pytest.mark.parametrize('scheduler', [FlowIntervalScheduler, FlowScheduler])
     def test_tight_example(self, scheduler: Type[AbstractFlowScheduler]) -> None:
-        unit_length_jobs = [Job(1, 11, 1) for _ in range(10)]
-        rigid_jobs = [Job(2, 11, 10) for _ in range(9)]
-        jobs = [Job(1, 21, 10)] + unit_length_jobs + rigid_jobs
         job_pool = JobPoolSI()
-        job_pool.jobs = jobs
+
+        for _ in range(10):
+            job_pool.add_job(1, 11, 1)
+        for _ in range(9):
+            job_pool.add_job(2, 11, 10)
+        job_pool.add_job(1, 21, 10)
 
         schedule = scheduler().process(job_pool, 10)
         active_time_slots_count = sum([ts.end - ts.start + 1 for ts in schedule.active_time_intervals])
 
-        assert schedule.all_jobs_scheduled is True, jobs
+        assert schedule.all_jobs_scheduled is True, schedule.all_jobs_scheduled
         assert active_time_slots_count == 20, active_time_slots_count
