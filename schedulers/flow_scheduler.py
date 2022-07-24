@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from abc import ABC, abstractmethod
 from enum import Enum
+from itertools import permutations
 from networkx import DiGraph
 from networkx.algorithms.flow import (
     maximum_flow,
@@ -11,7 +12,7 @@ from networkx.algorithms.flow import (
     boykov_kolmogorov,
 )
 from random import shuffle
-from typing import Dict, Iterable, List
+from typing import Dict, Iterable, List, Set
 
 from models import Job, JobPoolSI, JobScheduleMI, Schedule, TimeInterval
 from schedulers import AbstractScheduler
@@ -96,6 +97,15 @@ class FlowScheduler(AbstractFlowScheduler):
         max_t = max([job.deadline for job in job_pool.jobs]) + 1
         return list(range(min_t, max_t + 1))
 
+    def _apply_optimizations(
+            self,
+            job_pool: JobPoolSI,
+            graph: DiGraph,
+            active_timestamps: Set[int],
+            max_concurrency: int,
+    ) -> None:
+        return
+
     def process(self, job_pool: JobPoolSI, max_concurrency: int) -> Schedule:
         max_t = max([job.deadline for job in job_pool.jobs]) + 1
         duration_sum = sum([job.duration for job in job_pool.jobs])
@@ -123,11 +133,67 @@ class FlowScheduler(AbstractFlowScheduler):
 
         _, flow_dict = maximum_flow(graph, 0, 1 + len(job_pool.jobs) + max_t, flow_func=self.flow_method)
 
+        self._apply_optimizations(job_pool, graph, active_timestamps, max_concurrency)
+
         return Schedule(
             True,
             list(self._merge_active_timestamps(active_timestamps)),
             list(self._create_job_schedules(job_pool.jobs, flow_dict)),
         )
+
+
+class FlowLocalSearchScheduler(FlowScheduler):
+
+    def _try_close_open(
+            self,
+            job_pool: JobPoolSI,
+            graph: DiGraph,
+            active_timestamps: Set[int],
+            max_concurrency: int,
+    ) -> bool:
+        if len(active_timestamps) < max_concurrency:
+            return False
+
+        max_t = max([job.deadline for job in job_pool.jobs]) + 1
+        duration_sum = sum([job.duration for job in job_pool.jobs])
+
+        for ts_to_close in permutations(active_timestamps, max_concurrency):
+            for ts_to_open in permutations(active_timestamps, max_concurrency - 1):
+                ts_to_close = set(ts_to_close).intersection(active_timestamps)
+                ts_to_open = set(ts_to_open).difference(active_timestamps)
+
+                for t in ts_to_close:
+                    active_timestamps.remove(t)
+                    self._close_time_slot(t, job_pool.jobs, graph)
+                for t in ts_to_open:
+                    active_timestamps.add(t)
+                    self._open_time_slot(t, job_pool.jobs, graph)
+
+                flow_value, _ = maximum_flow(graph, 0, 1 + len(job_pool.jobs) + max_t, flow_func=self.flow_method)
+
+                if flow_value == duration_sum:
+                    return True
+
+                for t in ts_to_open:
+                    active_timestamps.remove(t)
+                    self._close_time_slot(t, job_pool.jobs, graph)
+                for t in ts_to_close:
+                    active_timestamps.add(t)
+                    self._open_time_slot(t, job_pool.jobs, graph)
+
+        return False
+
+    def _apply_optimizations(
+            self,
+            job_pool: JobPoolSI,
+            graph: DiGraph,
+            active_timestamps: Set[int],
+            max_concurrency: int,
+    ) -> None:
+        any_improvements = True
+
+        while any_improvements is True:
+            any_improvements = self._try_close_open(job_pool, graph, active_timestamps, max_concurrency)
 
 
 class FlowMinFeasScheduler(FlowScheduler):
@@ -241,7 +307,6 @@ class FlowIntervalScheduler(AbstractFlowScheduler):
                     active_intervals.append((interval.start + time_from, interval.start + time_to - 1))
 
             yield JobScheduleMI(job, list(AbstractScheduler._merge_active_time_slots(active_intervals)))
-
 
     def process(self, job_pool: JobPoolSI, max_concurrency: int) -> Schedule:
         duration_sum = sum([job.duration for job in job_pool.jobs])
