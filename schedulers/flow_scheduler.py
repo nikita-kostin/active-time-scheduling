@@ -10,7 +10,8 @@ from networkx.algorithms.flow import (
     dinitz,
     boykov_kolmogorov,
 )
-from typing import Dict, Iterable, List, Set
+from random import shuffle
+from typing import Dict, Iterable, List
 
 from models import Job, JobPoolSI, JobScheduleMI, Schedule, TimeInterval
 from schedulers import AbstractScheduler
@@ -89,25 +90,11 @@ class FlowScheduler(AbstractFlowScheduler):
 
             yield JobScheduleMI(job, list(AbstractScheduler._merge_active_timestamps(job_active_timestamps)))
 
-    def _close_slots_greedily(
-            self,
-            max_t: int,
-            job_pool: JobPoolSI,
-            graph: DiGraph,
-            duration_sum: int,
-    ) -> Set[int]:
-        active_timestamps = set()
-
-        for t in range(max_t):
-            self._close_time_slot(t, job_pool.jobs, graph)
-
-            flow_value, _ = maximum_flow(graph, 0, 1 + len(job_pool.jobs) + max_t, flow_func=self.flow_method)
-
-            if flow_value < duration_sum:
-                self._open_time_slot(t, job_pool.jobs, graph)
-                active_timestamps.add(t)
-
-        return active_timestamps
+    @staticmethod
+    def _get_t_ordering(job_pool: JobPoolSI) -> List[int]:
+        min_t = min([job.release_time for job in job_pool.jobs])
+        max_t = max([job.deadline for job in job_pool.jobs]) + 1
+        return list(range(min_t, max_t + 1))
 
     def process(self, job_pool: JobPoolSI, max_concurrency: int) -> Schedule:
         max_t = max([job.deadline for job in job_pool.jobs]) + 1
@@ -123,7 +110,16 @@ class FlowScheduler(AbstractFlowScheduler):
         if flow_value < duration_sum:
             return Schedule(False, None, None)
 
-        active_timestamps = self._close_slots_greedily(max_t, job_pool, graph, duration_sum)
+        active_timestamps = set()
+
+        for t in self._get_t_ordering(job_pool):
+            self._close_time_slot(t, job_pool.jobs, graph)
+
+            flow_value, _ = maximum_flow(graph, 0, 1 + len(job_pool.jobs) + max_t, flow_func=self.flow_method)
+
+            if flow_value < duration_sum:
+                self._open_time_slot(t, job_pool.jobs, graph)
+                active_timestamps.add(t)
 
         _, flow_dict = maximum_flow(graph, 0, 1 + len(job_pool.jobs) + max_t, flow_func=self.flow_method)
 
@@ -134,35 +130,28 @@ class FlowScheduler(AbstractFlowScheduler):
         )
 
 
+class FlowMinFeasScheduler(FlowScheduler):
+
+    @staticmethod
+    def _get_t_ordering(job_pool: JobPoolSI) -> List[int]:
+        t_ordering = FlowScheduler._get_t_ordering(job_pool)
+        shuffle(t_ordering)
+        return t_ordering
+
+
 class FlowDensityFirstScheduler(FlowScheduler):
 
-    def _close_slots_greedily(
-            self,
-            max_t: int,
-            job_pool: JobPoolSI,
-            graph: DiGraph,
-            duration_sum: int,
-    ) -> Set[int]:
-        active_timestamps = set()
-
+    @staticmethod
+    def _get_t_ordering(job_pool: JobPoolSI) -> List[int]:
         frequency = {}
         for job in job_pool.jobs:
             for t in range(job.release_time, job.deadline + 1):
                 frequency.setdefault(t, 0)
                 frequency[t] += 1
 
-        ordering = sorted((item[1], item[0]) for item in frequency.items())
+        t_ordering = sorted((item[1], item[0]) for item in frequency.items())
 
-        for _, t in ordering:
-            self._close_time_slot(t, job_pool.jobs, graph)
-
-            flow_value, _ = maximum_flow(graph, 0, 1 + len(job_pool.jobs) + max_t, flow_func=self.flow_method)
-
-            if flow_value < duration_sum:
-                self._open_time_slot(t, job_pool.jobs, graph)
-                active_timestamps.add(t)
-
-        return active_timestamps
+        return [t for _, t in t_ordering]
 
 
 class FlowIntervalScheduler(AbstractFlowScheduler):
