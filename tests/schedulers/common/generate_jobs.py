@@ -1,10 +1,16 @@
 # -*- coding: utf-8 -*-
+from functools import partial
 from numpy import arange
 from numpy.random import choice, randint, random
 from scipy.stats import norm
-from typing import Tuple
+from typing import Callable, Optional, Tuple
 
-from models import JobPoolMI, JobPoolSI, TimeInterval
+from schedulers import FlowScheduler
+from models import AbstractJobPool, JobPoolMI, JobPoolSI, Schedule, TimeInterval
+
+
+def _create_partial_function(max_concurrency: int) -> Callable[[AbstractJobPool], Schedule]:
+    return partial(FlowScheduler().process, max_concurrency=max_concurrency)
 
 
 def _generate_job_attributes(max_t: int, length: int, duration_range: Tuple[int, int]) -> Tuple[int, int, int]:
@@ -15,29 +21,55 @@ def _generate_job_attributes(max_t: int, length: int, duration_range: Tuple[int,
     return release_time, deadline, duration
 
 
+def _generate_jobs_uniform_distribution(
+        number_of_jobs: int,
+        max_t: int,
+        length_range: Tuple[int, int],
+        duration_range: Tuple[int, int],
+        is_feasible: Optional[Callable[[AbstractJobPool], Schedule]] = None,
+) -> JobPoolSI:
+    job_pool = JobPoolSI()
+
+    while job_pool.size != number_of_jobs:
+        length = randint(length_range[0], length_range[1] + 1)
+        release_time, deadline, duration = _generate_job_attributes(max_t, length, duration_range)
+
+        job_pool.add_job(release_time, deadline, duration)
+
+        if is_feasible is not None and is_feasible(job_pool).all_jobs_scheduled is False:
+            job_pool.jobs.pop()
+
+    return job_pool
+
+
 def generate_jobs_uniform_distribution(
         number_of_jobs: int,
         max_t: int,
         length_range: Tuple[int, int],
         duration_range: Tuple[int, int],
 ) -> JobPoolSI:
-    job_pool = JobPoolSI()
-
-    for _ in range(number_of_jobs):
-        length = randint(length_range[0], length_range[1] + 1)
-        release_time, deadline, duration = _generate_job_attributes(max_t, length, duration_range)
-
-        job_pool.add_job(release_time, deadline, duration)
-
-    return job_pool
+    return _generate_jobs_uniform_distribution(number_of_jobs, max_t, length_range, duration_range)
 
 
-def generate_jobs_normal_distribution(
+def generate_feasible_jobs_uniform_distribution(
+        number_of_jobs: int,
+        max_t: int,
+        length_range: Tuple[int, int],
+        duration_range: Tuple[int, int],
+        max_concurrency: int,
+) -> JobPoolSI:
+    is_feasible = _create_partial_function(max_concurrency)
+
+    return _generate_jobs_uniform_distribution(number_of_jobs, max_t, length_range, duration_range, is_feasible)
+
+
+def _generate_jobs_normal_distribution(
         number_of_jobs: int,
         max_t: int,
         length_mu: int,
         length_sigma: int,
         duration_range: Tuple[int, int],
+        is_feasible: Optional[Callable[[AbstractJobPool], Schedule]] = None,
 ) -> JobPoolSI:
     job_pool = JobPoolSI()
 
@@ -49,24 +81,53 @@ def generate_jobs_normal_distribution(
     )
     p /= p.sum()
 
-    for _ in range(number_of_jobs):
+    while job_pool.size != number_of_jobs:
         length = choice(possible_length, p=p)
         release_time, deadline, duration = _generate_job_attributes(max_t, length, duration_range)
 
         job_pool.add_job(release_time, deadline, duration)
 
+        if is_feasible is not None and is_feasible(job_pool).all_jobs_scheduled is False:
+            job_pool.jobs.pop()
+
     return job_pool
 
 
-def generate_mi_jobs(
+def generate_jobs_normal_distribution(
+        number_of_jobs: int,
+        max_t: int,
+        length_mu: int,
+        length_sigma: int,
+        duration_range: Tuple[int, int],
+) -> JobPoolSI:
+    return _generate_jobs_normal_distribution(number_of_jobs, max_t, length_mu, length_sigma, duration_range)
+
+
+def generate_feasible_jobs_normal_distribution(
+        number_of_jobs: int,
+        max_t: int,
+        length_mu: int,
+        length_sigma: int,
+        duration_range: Tuple[int, int],
+        max_concurrency: int,
+) -> JobPoolSI:
+    is_feasible = _create_partial_function(max_concurrency)
+
+    return _generate_jobs_normal_distribution(
+        number_of_jobs, max_t, length_mu, length_sigma, duration_range, is_feasible
+    )
+
+
+def _generate_mi_jobs(
         number_of_jobs: int,
         max_t: int,
         p_range: Tuple[float, float],
         max_duration: int,
+        is_feasible: Optional[Callable[[AbstractJobPool], Schedule]] = None,
 ) -> JobPoolMI:
     job_pool = JobPoolMI()
 
-    for _ in range(number_of_jobs):
+    while job_pool.size != number_of_jobs:
         p = p_range[0] + random() * (p_range[1] - p_range[0])
 
         selected_timestamps = set()
@@ -83,4 +144,28 @@ def generate_mi_jobs(
             duration,
         )
 
+        if is_feasible is not None and is_feasible(job_pool).all_jobs_scheduled is False:
+            job_pool.jobs.pop()
+
     return job_pool
+
+
+def generate_mi_jobs(
+        number_of_jobs: int,
+        max_t: int,
+        p_range: Tuple[float, float],
+        max_duration: int,
+) -> JobPoolMI:
+    return _generate_mi_jobs(number_of_jobs, max_t, p_range, max_duration)
+
+
+def generate_feasible_mi_jobs(
+        number_of_jobs: int,
+        max_t: int,
+        p_range: Tuple[float, float],
+        max_duration: int,
+        max_concurrency: int,
+) -> JobPoolMI:
+    is_feasible = _create_partial_function(max_concurrency)
+
+    return _generate_mi_jobs(number_of_jobs, max_t, p_range, max_duration, is_feasible)
