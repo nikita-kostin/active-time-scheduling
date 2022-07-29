@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 import math
+import warnings
 from enum import Enum
 from networkx import maximum_flow
-from scipy.optimize import OptimizeResult, linprog
+from scipy.linalg import LinAlgWarning
+from scipy.optimize import OptimizeResult, OptimizeWarning, linprog
 from typing import Dict, Iterable, List, Tuple
 
 from models import JobPoolMI, JobPoolSI, JobScheduleMI, JobMI, Schedule, TimeInterval
@@ -94,6 +96,10 @@ class LinearProgrammingArbitraryPreemptionScheduler(AbstractScheduler):
             job_pool: JobPoolMI,
             max_concurrency: int,
     ) -> Schedule:
+        # Disable precision warnings from old SciPy solvers
+        warnings.simplefilter('ignore', LinAlgWarning)
+        warnings.simplefilter('ignore', OptimizeWarning)
+
         var_counter = 0
 
         t_to_var = {}
