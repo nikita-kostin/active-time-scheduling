@@ -5,7 +5,7 @@ from networkx import maximum_flow
 from scipy.optimize import OptimizeResult, linprog
 from typing import Dict, Iterable, List, Tuple
 
-from models import Job, JobPoolMI, JobPoolSI, JobScheduleMI, JobMI, Schedule, TimeInterval
+from models import JobPoolMI, JobPoolSI, JobScheduleMI, JobMI, Schedule, TimeInterval
 from schedulers import AbstractScheduler, FlowScheduler
 from schedulers.flow_scheduler import FlowMethod
 
@@ -163,6 +163,6 @@ class LinearProgrammingRoundedScheduler(LinearProgrammingArbitraryPreemptionSche
 
         return Schedule(
             True,
-            list(self._merge_active_timestamps(active_timestamps)),
+            TimeInterval.merge_timestamps(active_timestamps),
             list(FlowScheduler._create_job_schedules(job_pool.jobs, flow_dict)),
         )

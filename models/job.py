@@ -57,6 +57,7 @@ class TimeInterval(object):
     @staticmethod
     def merge_time_intervals(time_intervals: List['TimeInterval']) -> List['TimeInterval']:
         time_intervals = sorted(time_intervals)
+        merged_time_intervals = []
 
         time_interval_start = None
         time_interval_end = None
@@ -70,14 +71,14 @@ class TimeInterval(object):
             if time_interval_start <= time_interval.start <= time_interval_end + 1:
                 time_interval_end = max(time_interval_end, time_interval.end)
             else:
-                time_intervals.append(TimeInterval(time_interval_start, time_interval_end))
+                merged_time_intervals.append(TimeInterval(time_interval_start, time_interval_end))
                 time_interval_start = time_interval.start
                 time_interval_end = time_interval.end
 
         if time_interval_start is not None:
-            time_intervals.append(TimeInterval(time_interval_start, time_interval_end))
+            merged_time_intervals.append(TimeInterval(time_interval_start, time_interval_end))
 
-        return time_intervals
+        return merged_time_intervals
 
 
 class AbstractJob(ABC):

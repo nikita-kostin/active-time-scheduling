@@ -2,7 +2,7 @@
 from numpy import argmax
 from typing import Iterable, List, Optional
 
-from models import BatchJobSchedule, BatchJob, FixedLengthJobPoolSI, Schedule
+from models import BatchJobSchedule, BatchJob, FixedLengthJobPoolSI, Schedule, TimeInterval
 from schedulers import AbstractScheduler
 
 
@@ -123,10 +123,10 @@ class BatchScheduler(AbstractScheduler):
         if batches is None:
             return Schedule(False, None, None)
 
-        active_time_slots = [(batch.execution_start, batch.execution_end) for batch in batches]
+        active_time_intervals = [TimeInterval(batch.execution_start, batch.execution_end) for batch in batches]
 
         return Schedule(
             True,
-            list(self._merge_active_time_slots(active_time_slots)),
+            TimeInterval.merge_time_intervals(active_time_intervals),
             batches,
         )

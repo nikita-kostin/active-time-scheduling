@@ -2,9 +2,9 @@
 from networkx import Graph
 from typing import Any, Dict, List, Tuple, Set
 
-from utils import EdmondsBlossomMatching, UpperDegreeConstrainedSubgraph
-from models import JobMI, JobPoolMI, JobScheduleMI, JobScheduleSI, Schedule, UnitJobPoolMI
+from models import JobMI, JobPoolMI, JobScheduleMI, JobScheduleSI, Schedule, UnitJobPoolMI, TimeInterval
 from schedulers import AbstractScheduler
+from utils import EdmondsBlossomMatching, UpperDegreeConstrainedSubgraph
 
 
 class MatchingScheduler(AbstractScheduler):
@@ -55,7 +55,7 @@ class MatchingScheduler(AbstractScheduler):
 
         return Schedule(
             all_jobs_scheduled,
-            None if all_jobs_scheduled is False else list(cls._merge_active_timestamps(active_timestamps)),
+            None if all_jobs_scheduled is False else TimeInterval.merge_timestamps(active_timestamps),
             None if all_jobs_scheduled is False else [
                 cls._create_job_schedules_for_job(i, job, job_pool, matching) for i, job in enumerate(job_pool.jobs)
             ],
@@ -79,7 +79,7 @@ class UpperDegreeConstrainedSubgraphScheduler(AbstractScheduler):
                 if u in dcs[i]:
                     active_timestamps.add(t)
 
-        return JobScheduleMI(job, list(AbstractScheduler._merge_active_timestamps(active_timestamps)))
+        return JobScheduleMI(job, TimeInterval.merge_timestamps(active_timestamps))
 
     @classmethod
     def process(cls, job_pool: JobPoolMI) -> Schedule:
@@ -127,7 +127,7 @@ class UpperDegreeConstrainedSubgraphScheduler(AbstractScheduler):
 
         return Schedule(
             all_jobs_scheduled,
-            None if all_jobs_scheduled is False else list(cls._merge_active_timestamps(active_timestamps)),
+            None if all_jobs_scheduled is False else TimeInterval.merge_timestamps(active_timestamps),
             None if all_jobs_scheduled is False else [
                 cls._create_job_schedules_for_job(i, job_pool, job, dcs) for i, job in enumerate(job_pool.jobs)
             ],

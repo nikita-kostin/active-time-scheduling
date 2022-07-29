@@ -2,7 +2,7 @@
 from networkx.algorithms.flow import maximum_flow
 from typing import Dict, List, Set, Tuple
 
-from models import Job, JobPoolMI, Schedule
+from models import Job, JobPoolMI, Schedule, TimeInterval
 from schedulers import FlowScheduler
 
 
@@ -59,6 +59,6 @@ class BruteForceScheduler(FlowScheduler):
 
         return Schedule(
             True,
-            list(self._merge_active_timestamps(active_timestamps)),
+            TimeInterval.merge_timestamps(active_timestamps),
             job_schedules,
         )

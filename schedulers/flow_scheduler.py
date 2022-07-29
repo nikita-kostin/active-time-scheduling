@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from abc import ABC, abstractmethod
+from copy import deepcopy
 from enum import Enum
 from itertools import permutations
 from networkx import DiGraph
@@ -89,7 +90,7 @@ class FlowScheduler(AbstractFlowScheduler):
                 t for t in range(job.release_time, job.deadline + 1) if flow_dict[1 + i].get(1 + len(jobs) + t, 0) != 0
             }
 
-            yield JobScheduleMI(job, list(AbstractScheduler._merge_active_timestamps(job_active_timestamps)))
+            yield JobScheduleMI(job, TimeInterval.merge_timestamps(job_active_timestamps))
 
     @staticmethod
     def _get_t_ordering(job_pool: JobPoolSI) -> List[int]:
@@ -137,7 +138,7 @@ class FlowScheduler(AbstractFlowScheduler):
 
         return Schedule(
             True,
-            list(self._merge_active_timestamps(active_timestamps)),
+            TimeInterval.merge_timestamps(active_timestamps),
             list(self._create_job_schedules(job_pool.jobs, flow_dict)),
         )
 
@@ -300,13 +301,13 @@ class FlowIntervalScheduler(AbstractFlowScheduler):
                 time_to = time_within_interval[i]
 
                 if time_to <= time_from:
-                    active_intervals.append((interval.start + time_from, interval.end))
+                    active_intervals.append(TimeInterval(interval.start + time_from, interval.end))
                     time_from = 0
 
                 if time_from != time_to:
-                    active_intervals.append((interval.start + time_from, interval.start + time_to - 1))
+                    active_intervals.append(TimeInterval(interval.start + time_from, interval.start + time_to - 1))
 
-            yield JobScheduleMI(job, list(AbstractScheduler._merge_active_time_slots(active_intervals)))
+            yield JobScheduleMI(job, TimeInterval.merge_time_intervals(active_intervals))
 
     def process(self, job_pool: JobPoolSI, max_concurrency: int) -> Schedule:
         duration_sum = sum([job.duration for job in job_pool.jobs])
@@ -353,12 +354,12 @@ class FlowIntervalScheduler(AbstractFlowScheduler):
             self._reduce_interval(job_pool.jobs, i, intervals, graph, max_concurrency, left)
 
             if left != intervals[i].duration:
-                active_intervals.append((intervals[i].start + left, intervals[i].end))
+                active_intervals.append(deepcopy(intervals[i]))
 
         _, flow_dict = maximum_flow(graph, 0, 1 + len(job_pool.jobs) + len(intervals), flow_func=self.flow_method)
 
         return Schedule(
             True,
-            list(self._merge_active_time_slots(active_intervals)),
+            TimeInterval.merge_time_intervals(active_intervals),
             list(self._create_job_schedules(job_pool.jobs, intervals, flow_dict)),
         )

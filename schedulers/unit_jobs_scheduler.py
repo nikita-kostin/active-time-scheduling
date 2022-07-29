@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from typing import Dict, Iterable, List
 from queue import PriorityQueue
 
-from models import Job, UnitJobPoolSI, JobScheduleSI, Schedule, TimeInterval
+from models import UnitJobPoolSI, JobScheduleSI, Schedule, TimeInterval
 from schedulers import AbstractScheduler
 from utils import DisjointSetNode
 
@@ -132,9 +132,9 @@ class UnitJobsSchedulerNLogN(AbstractUnitJobsScheduler):
 
     @classmethod
     def _get_active_time_slots(cls, job_schedules: List[JobScheduleSI]) -> Iterable[TimeInterval]:
-        active_time_slots = [(js.execution_start, js.execution_end) for js in job_schedules]
+        active_time_intervals = [TimeInterval(js.execution_start, js.execution_end) for js in job_schedules]
 
-        yield from cls._merge_active_time_slots(active_time_slots)
+        yield from TimeInterval.merge_time_intervals(active_time_intervals)
 
 
 class UnitJobsSchedulerT(AbstractUnitJobsScheduler):
@@ -218,7 +218,7 @@ class UnitJobsSchedulerT(AbstractUnitJobsScheduler):
         for js in job_schedules:
             active_timestamps.add(js.execution_start)
 
-        yield from cls._merge_active_timestamps(active_timestamps)
+        yield from TimeInterval.merge_timestamps(active_timestamps)
 
 
 UnitJobsScheduler = UnitJobsSchedulerT
