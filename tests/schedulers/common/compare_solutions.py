@@ -71,8 +71,8 @@ def _check_approximation(
         _check_feasibility(schedule_a, job_pool, max_concurrency)
         _check_feasibility(schedule_b, job_pool, max_concurrency)
 
-        duration_sum_a = sum(js.duration for js in schedule_a.job_schedules)
-        duration_sum_b = sum(js.duration for js in schedule_b.job_schedules)
+        duration_sum_a = sum(interval.duration for interval in schedule_a.active_time_intervals)
+        duration_sum_b = sum(interval.duration for interval in schedule_b.active_time_intervals)
 
         assert 1 / approximation_constant <= duration_sum_a / duration_sum_b <= approximation_constant
 
