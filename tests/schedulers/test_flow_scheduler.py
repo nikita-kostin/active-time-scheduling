@@ -12,10 +12,24 @@ from schedulers import (
     UnitJobsSchedulerT,
     UpperDegreeConstrainedSubgraphScheduler,
 )
-from tests.schedulers.common import check_2_approximation, generate_jobs_uniform_distribution
+from tests.schedulers.common import check_equality, check_2_approximation, generate_jobs_uniform_distribution
 
 
 class TestFlowScheduler(object):
+
+    @pytest.mark.repeat(1000)
+    def test_interval_scheduler(self) -> None:
+        max_length = randint(1, 5)
+        max_t = randint(15, 31)
+        max_concurrency = randint(1, 4)
+        number_of_jobs = randint(1, max_t * 2 + 1)
+
+        job_pool = generate_jobs_uniform_distribution(number_of_jobs, max_t, (1, max_length), (1, max_length))
+
+        schedule_a = FlowScheduler().process(job_pool, max_concurrency)
+        schedule_b = FlowIntervalScheduler().process(job_pool, max_concurrency)
+
+        check_equality(schedule_a, schedule_b, job_pool, max_concurrency)
 
     @pytest.mark.repeat(1000)
     @pytest.mark.parametrize('scheduler_b', [FlowIntervalScheduler, FlowScheduler])

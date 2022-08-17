@@ -354,7 +354,7 @@ class FlowIntervalScheduler(AbstractFlowScheduler):
             self._reduce_interval(job_pool.jobs, i, intervals, graph, max_concurrency, left)
 
             if left != intervals[i].duration:
-                active_intervals.append(deepcopy(intervals[i]))
+                active_intervals.append(TimeInterval(intervals[i].start, intervals[i].end - left))
 
         _, flow_dict = maximum_flow(graph, 0, 1 + len(job_pool.jobs) + len(intervals), flow_func=self.flow_method)
 
