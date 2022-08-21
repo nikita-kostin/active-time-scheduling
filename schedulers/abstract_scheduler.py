@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
-from abc import ABC
+from abc import ABC, abstractmethod
 
 from models import AbstractJobPool, Schedule
 
 
 class AbstractScheduler(ABC):
 
-    def process(self, job_pool: AbstractJobPool, **kwargs) -> Schedule:
+    @abstractmethod
+    def process(self, *args) -> Schedule:
         pass

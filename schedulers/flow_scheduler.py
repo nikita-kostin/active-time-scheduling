@@ -12,7 +12,7 @@ from networkx.algorithms.flow import (
     boykov_kolmogorov,
 )
 from random import shuffle
-from typing import Dict, Iterable, List, Optional, Set
+from typing import Dict, Iterable, List, Set
 
 from models import Job, JobPoolSI, JobScheduleMI, Schedule, TimeInterval
 from schedulers import AbstractScheduler
@@ -34,7 +34,7 @@ class AbstractFlowScheduler(AbstractScheduler, ABC):
         self.flow_method = flow_method
 
     @abstractmethod
-    def process(self, job_pool: JobPoolSI, max_concurrency: Optional[int] = None, **kwargs) -> Schedule:
+    def process(self, job_pool: JobPoolSI, max_concurrency: int) -> Schedule:
         pass
 
 
@@ -106,10 +106,7 @@ class FlowScheduler(AbstractFlowScheduler):
     ) -> None:
         return
 
-    def process(self, job_pool: JobPoolSI, max_concurrency: Optional[int] = None, **kwargs) -> Schedule:
-        if max_concurrency is None:
-            raise ValueError('max_concurrency should not be None')
-
+    def process(self, job_pool: JobPoolSI, max_concurrency: int) -> Schedule:
         max_t = max([job.deadline for job in job_pool.jobs]) + 1
         duration_sum = sum([job.duration for job in job_pool.jobs])
 
@@ -311,10 +308,7 @@ class FlowIntervalScheduler(AbstractFlowScheduler):
 
             yield JobScheduleMI(job, TimeInterval.merge_time_intervals(active_intervals))
 
-    def process(self, job_pool: JobPoolSI, max_concurrency: Optional[int] = None, **kwargs) -> Schedule:
-        if max_concurrency is None:
-            raise ValueError('max_concurrency should not be None')
-
+    def process(self, job_pool: JobPoolSI, max_concurrency: int) -> Schedule:
         duration_sum = sum([job.duration for job in job_pool.jobs])
 
         release_time_timestamps = [job.release_time for job in job_pool.jobs]

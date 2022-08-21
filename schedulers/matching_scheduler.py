@@ -24,7 +24,7 @@ class MatchingScheduler(AbstractScheduler):
                     return JobScheduleSI(job, t, t)
 
     @classmethod
-    def process(cls, job_pool: UnitJobPoolMI, **kwargs) -> Schedule:
+    def process(cls, job_pool: UnitJobPoolMI) -> Schedule:
         graph = Graph()
 
         for i, job in enumerate(job_pool.jobs):
@@ -82,7 +82,7 @@ class UpperDegreeConstrainedSubgraphScheduler(AbstractScheduler):
         return JobScheduleMI(job, TimeInterval.merge_timestamps(active_timestamps))
 
     @classmethod
-    def process(cls, job_pool: JobPoolMI, **kwargs) -> Schedule:
+    def process(cls, job_pool: JobPoolMI) -> Schedule:
         g = Graph()
 
         constraints = {}

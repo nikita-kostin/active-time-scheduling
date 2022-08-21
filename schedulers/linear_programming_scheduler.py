@@ -5,7 +5,7 @@ from enum import Enum
 from networkx import maximum_flow
 from scipy.linalg import LinAlgWarning
 from scipy.optimize import OptimizeResult, OptimizeWarning, linprog
-from typing import Dict, Iterable, List, Optional, Tuple
+from typing import Dict, Iterable, List, Tuple
 
 from models import JobPoolMI, JobPoolSI, JobScheduleMI, JobMI, Schedule, TimeInterval
 from schedulers import AbstractScheduler, FlowScheduler
@@ -91,10 +91,7 @@ class LinearProgrammingArbitraryPreemptionScheduler(AbstractScheduler):
 
             yield job_schedule
 
-    def process(self, job_pool: JobPoolMI, max_concurrency: Optional[int] = None, **kwargs) -> Schedule:
-        if max_concurrency is None:
-            raise ValueError('max_concurrency should not be None')
-
+    def process(self, job_pool: JobPoolMI, max_concurrency: int) -> Schedule:
         # Disable precision warnings from old SciPy solvers
         warnings.simplefilter('ignore', LinAlgWarning)
         warnings.simplefilter('ignore', OptimizeWarning)
@@ -132,10 +129,8 @@ class LinearProgrammingArbitraryPreemptionScheduler(AbstractScheduler):
 
 class LinearProgrammingRoundedScheduler(LinearProgrammingArbitraryPreemptionScheduler, FlowScheduler):
 
-    def process(self, job_pool: JobPoolMI, max_concurrency: Optional[int] = None, **kwargs) -> Schedule:
-        schedule = super(LinearProgrammingRoundedScheduler, self).process(
-            job_pool, max_concurrency=max_concurrency, **kwargs
-        )
+    def process(self, job_pool: JobPoolSI, max_concurrency: int) -> Schedule:
+        schedule = super(LinearProgrammingRoundedScheduler, self).process(job_pool, max_concurrency)
 
         if schedule.all_jobs_scheduled is False:
             return Schedule(False, None, None)
