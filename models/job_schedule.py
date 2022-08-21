@@ -28,7 +28,7 @@ class JobScheduleMI(AbstractJobSchedule):
 
 
 @total_ordering
-class JobSchedule(AbstractJobSchedule):
+class JobSchedule(JobScheduleMI):
 
     def __init__(
             self,

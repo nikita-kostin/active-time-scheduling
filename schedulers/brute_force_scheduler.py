@@ -2,7 +2,7 @@
 from networkx.algorithms.flow import maximum_flow
 from typing import Dict, List, Set, Tuple, Union
 
-from models import Job, JobPool, JobPoolMI, Schedule, TimeInterval
+from models import JobMI, JobPool, JobPoolMI, Schedule, TimeInterval
 from schedulers import FlowScheduler
 
 
@@ -12,7 +12,7 @@ class BruteForceScheduler(FlowScheduler):
             self,
             max_concurrency: int,
             max_t: int,
-            jobs: List[Job],
+            jobs: List[JobMI],
             active_timestamps: Set[int],
     ) -> Tuple[int, Dict[int, Dict[int, int]]]:
         graph = self._create_initial_graph(max_concurrency, max_t, jobs)
@@ -24,13 +24,17 @@ class BruteForceScheduler(FlowScheduler):
         return maximum_flow(graph, 0, 1 + len(jobs) + max_t, flow_func=self.flow_method)
 
     def process(self, job_pool: Union[JobPoolMI, JobPool], max_concurrency: int) -> Schedule:
-        max_t = max([job.deadline for job in job_pool.jobs]) + 1
+        if job_pool.size == 0:
+            return Schedule(True, [], [])
+
+        max_t = max([interval.end for job in job_pool.jobs for interval in job.availability_intervals], default=0) + 1
         duration_sum = sum([job.duration for job in job_pool.jobs])
 
         active_timestamps = set()
         for job in job_pool.jobs:
-            for t in range(job.release_time, job.deadline + 1):
-                active_timestamps.add(t)
+            for interval in job.availability_intervals:
+                for t in range(interval.start, interval.end + 1):
+                    active_timestamps.add(t)
 
         flow_value, _ = self._compute_flow(max_concurrency, max_t, job_pool.jobs, active_timestamps)
 

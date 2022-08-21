@@ -103,7 +103,7 @@ class JobMI(AbstractJob):
         super(JobMI, self).__init__(availability_intervals, duration)
 
     def __str__(self) -> str:
-        return "JobMI(intervals={0}, duration={1})".format(
+        return "JobMI(availability_intervals={0}, duration={1})".format(
             self.availability_intervals,
             self.duration
         )

@@ -74,6 +74,9 @@ def _check_approximation(
         duration_sum_a = sum(interval.duration for interval in schedule_a.active_time_intervals)
         duration_sum_b = sum(interval.duration for interval in schedule_b.active_time_intervals)
 
+        if duration_sum_a == duration_sum_b:
+            return
+
         assert 1 / approximation_constant <= duration_sum_a / duration_sum_b <= approximation_constant
 
 

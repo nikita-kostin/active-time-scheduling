@@ -6,7 +6,6 @@ from models import (
     JobMI,
     JobPool,
     JobPoolMI,
-    JobSchedule,
     JobScheduleMI,
     Schedule,
     UnitJobPool,
@@ -25,19 +24,24 @@ class MatchingScheduler(AbstractScheduler):
             job: JobMI,
             job_pool: Union[UnitJobPoolMI, UnitJobPool],
             matching: Set[Tuple[int, int]],
-    ) -> JobSchedule:
+    ) -> JobScheduleMI:
         for interval in job.availability_intervals:
             for t in range(interval.start, interval.end + 1):
                 u = job_pool.size + 2 * t
                 v = u + 1
                 if (i, u) in matching or (i, v) in matching:
-                    return JobSchedule(job, t, t)
+                    return JobScheduleMI(job, [TimeInterval(t, t)])
+
+        return JobScheduleMI(job, [])
 
     @classmethod
     def process(cls, job_pool: Union[UnitJobPoolMI, UnitJobPool]) -> Schedule:
         graph = Graph()
 
-        for i, job in enumerate(job_pool.jobs):
+        jobs = [job for job in job_pool.jobs if job.duration != 0]
+        empty_jobs = [job for job in job_pool.jobs if job.duration == 0]
+
+        for i, job in enumerate(jobs):
             for interval in job.availability_intervals:
                 for t in range(interval.start, interval.end + 1):
                     graph.add_edge(i, job_pool.size + 2 * t)
@@ -45,7 +49,7 @@ class MatchingScheduler(AbstractScheduler):
 
         matching = EdmondsBlossomMatching().process(graph)
 
-        for i, job in enumerate(job_pool.jobs):
+        for i, job in enumerate(jobs):
             for interval in job.availability_intervals:
                 for t in range(interval.start, interval.end + 1):
                     graph.add_edge(job_pool.size + 2 * t, job_pool.size + 2 * t + 1)
@@ -61,14 +65,14 @@ class MatchingScheduler(AbstractScheduler):
                 scheduled_jobs.add(u)
                 active_timestamps.add((v - job_pool.size) // 2)
 
-        all_jobs_scheduled = len(scheduled_jobs) == job_pool.size
+        all_jobs_scheduled = len(scheduled_jobs) == len(jobs)
 
         return Schedule(
             all_jobs_scheduled,
             None if all_jobs_scheduled is False else TimeInterval.merge_timestamps(active_timestamps),
             None if all_jobs_scheduled is False else [
-                cls._create_job_schedules_for_job(i, job, job_pool, matching) for i, job in enumerate(job_pool.jobs)
-            ],
+                cls._create_job_schedules_for_job(i, job, job_pool, matching) for i, job in enumerate(jobs)
+            ] + [JobScheduleMI(job, []) for job in empty_jobs],
         )
 
 

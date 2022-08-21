@@ -14,7 +14,7 @@ from networkx.algorithms.flow import (
 from random import shuffle
 from typing import Dict, Iterable, List, Set
 
-from models import Job, JobPool, JobScheduleMI, Schedule, TimeInterval
+from models import Job, JobMI, JobPool, JobScheduleMI, Schedule, TimeInterval
 from schedulers import AbstractScheduler
 from utils import ford_fulkerson
 
@@ -44,7 +44,7 @@ class FlowScheduler(AbstractFlowScheduler):
     def _create_initial_graph(
             max_concurrency: int,
             max_t: int,
-            jobs: List[Job],
+            jobs: List[JobMI],
     ) -> DiGraph:
         graph = DiGraph()
 
@@ -62,32 +62,37 @@ class FlowScheduler(AbstractFlowScheduler):
         return graph
 
     @staticmethod
-    def _open_time_slot(t: int, jobs: List[Job], graph: DiGraph) -> None:
+    def _open_time_slot(t: int, jobs: List[JobMI], graph: DiGraph) -> None:
         for i, job in enumerate(jobs):
-            if job.release_time <= t <= job.deadline:
-                u = 1 + i
-                v = 1 + len(jobs) + t
+            for interval in job.availability_intervals:
+                if interval.start <= t <= interval.end:
+                    u = 1 + i
+                    v = 1 + len(jobs) + t
 
-                graph.add_edge(u, v, capacity=1)
+                    graph.add_edge(u, v, capacity=1)
 
     @staticmethod
-    def _close_time_slot(t: int, jobs: List[Job], graph: DiGraph) -> None:
+    def _close_time_slot(t: int, jobs: List[JobMI], graph: DiGraph) -> None:
         for i, job in enumerate(jobs):
-            if job.release_time <= t <= job.deadline:
-                u = 1 + i
-                v = 1 + len(jobs) + t
+            for interval in job.availability_intervals:
+                if interval.start <= t <= interval.end:
+                    u = 1 + i
+                    v = 1 + len(jobs) + t
 
-                graph.remove_edge(u, v)
+                    graph.remove_edge(u, v)
 
     @staticmethod
     def _create_job_schedules(
-            jobs: List[Job],
+            jobs: List[JobMI],
             flow_dict: Dict[int, Dict[int, int]],
     ) -> Iterable[JobScheduleMI]:
         for i, job in enumerate(jobs):
-            job_active_timestamps = {
-                t for t in range(job.release_time, job.deadline + 1) if flow_dict[1 + i].get(1 + len(jobs) + t, 0) != 0
-            }
+            job_active_timestamps = set()
+
+            for interval in job.availability_intervals:
+                for t in range(interval.start, interval.end + 1):
+                    if flow_dict[1 + i].get(1 + len(jobs) + t, 0) != 0:
+                        job_active_timestamps.add(t)
 
             yield JobScheduleMI(job, TimeInterval.merge_timestamps(job_active_timestamps))
 

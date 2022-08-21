@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import pytest
-from random import randint
+from random import randint, random
 
 from schedulers import (
     BruteForceScheduler,
@@ -8,18 +8,18 @@ from schedulers import (
     UnitJobsSchedulerT,
     UpperDegreeConstrainedSubgraphScheduler,
 )
-from tests.schedulers.common import check_equality, generate_jobs_uniform_distribution
+from tests.schedulers.common import check_equality, generate_jobs_uniform_distribution, generate_mi_jobs
 
 
 class TestMatchingScheduler(object):
 
     @pytest.mark.repeat(1000)
     def test_matching_against_brute_force(self) -> None:
-        max_length = randint(1, 5)
+        max_p = random()
         max_t = randint(4, 9)
         number_of_jobs = randint(max_t // 2, max_t * 2 + 1)
 
-        job_pool = generate_jobs_uniform_distribution(number_of_jobs, max_t, (1, max_length), (1, 1))
+        job_pool = generate_mi_jobs(number_of_jobs, max_t, (0, max_p), 1)
 
         schedule_a = BruteForceScheduler().process(job_pool, 2)
         schedule_b = MatchingScheduler().process(job_pool)  # noqa
