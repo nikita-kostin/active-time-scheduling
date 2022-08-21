@@ -2,7 +2,7 @@
 from abc import ABC, abstractmethod
 from typing import List, Tuple
 
-from models import JobMI, JobSI, TimeInterval
+from models import JobMI, Job, TimeInterval
 
 
 class AbstractJobPool(ABC):
@@ -30,10 +30,10 @@ class JobPoolMI(AbstractJobPool):
         return job.id
 
 
-class JobPoolSI(AbstractJobPool):
+class JobPool(AbstractJobPool):
 
     def add_job(self, release_time: int, deadline: int, duration: int) -> None:
-        job = JobSI(
+        job = Job(
             release_time=release_time,
             deadline=deadline,
             duration=duration,
@@ -57,14 +57,14 @@ class FixedLengthJobPoolMI(AbstractJobPool):
         return job.id
 
 
-class FixedLengthJobPoolSI(AbstractJobPool):
+class FixedLengthJobPool(AbstractJobPool):
 
     def __init__(self, duration: int) -> None:
-        super(FixedLengthJobPoolSI, self).__init__()
+        super(FixedLengthJobPool, self).__init__()
         self.duration = duration
 
     def add_job(self, release_time: int, deadline: int) -> None:
-        job = JobSI(
+        job = Job(
             release_time=release_time,
             deadline=deadline,
             duration=self.duration,
@@ -79,7 +79,7 @@ class UnitJobPoolMI(FixedLengthJobPoolMI):
         super(UnitJobPoolMI, self).__init__(duration=1)
 
 
-class UnitJobPoolSI(FixedLengthJobPoolSI):
+class UnitJobPool(FixedLengthJobPool):
 
     def __init__(self) -> None:
-        super(UnitJobPoolSI, self).__init__(duration=1)
+        super(UnitJobPool, self).__init__(duration=1)

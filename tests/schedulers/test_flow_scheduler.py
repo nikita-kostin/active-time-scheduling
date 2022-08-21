@@ -3,7 +3,7 @@ import pytest
 from numpy.random import randint
 from typing import Type
 
-from models import JobPoolSI
+from models import JobPool
 from schedulers import (
     AbstractFlowScheduler,
     BruteForceScheduler,
@@ -77,7 +77,7 @@ class TestFlowScheduler(object):
 
     @pytest.mark.parametrize('scheduler', [FlowIntervalScheduler, FlowScheduler])
     def test_tight_example(self, scheduler: Type[AbstractFlowScheduler]) -> None:
-        job_pool = JobPoolSI()
+        job_pool = JobPool()
 
         for _ in range(10):
             job_pool.add_job(1, 11, 1)

@@ -4,13 +4,13 @@ from typing import Any, Dict, Tuple, Set, Union
 
 from models import (
     JobMI,
+    JobPool,
     JobPoolMI,
-    JobPoolSI,
+    JobSchedule,
     JobScheduleMI,
-    JobScheduleSI,
     Schedule,
+    UnitJobPool,
     UnitJobPoolMI,
-    UnitJobPoolSI,
     TimeInterval,
 )
 from schedulers import AbstractScheduler
@@ -23,18 +23,18 @@ class MatchingScheduler(AbstractScheduler):
     def _create_job_schedules_for_job(
             i: int,
             job: JobMI,
-            job_pool: Union[UnitJobPoolMI, UnitJobPoolSI],
+            job_pool: Union[UnitJobPoolMI, UnitJobPool],
             matching: Set[Tuple[int, int]],
-    ) -> JobScheduleSI:
+    ) -> JobSchedule:
         for interval in job.availability_intervals:
             for t in range(interval.start, interval.end + 1):
                 u = job_pool.size + 2 * t
                 v = u + 1
                 if (i, u) in matching or (i, v) in matching:
-                    return JobScheduleSI(job, t, t)
+                    return JobSchedule(job, t, t)
 
     @classmethod
-    def process(cls, job_pool: Union[UnitJobPoolMI, UnitJobPoolSI]) -> Schedule:
+    def process(cls, job_pool: Union[UnitJobPoolMI, UnitJobPool]) -> Schedule:
         graph = Graph()
 
         for i, job in enumerate(job_pool.jobs):
@@ -77,7 +77,7 @@ class UpperDegreeConstrainedSubgraphScheduler(AbstractScheduler):
     @staticmethod
     def _create_job_schedules_for_job(
             i: int,
-            job_pool: Union[JobPoolMI, JobPoolSI],
+            job_pool: Union[JobPoolMI, JobPool],
             job: JobMI,
             dcs: Dict[Any, Set[Any]],
     ) -> JobScheduleMI:
@@ -92,7 +92,7 @@ class UpperDegreeConstrainedSubgraphScheduler(AbstractScheduler):
         return JobScheduleMI(job, TimeInterval.merge_timestamps(active_timestamps))
 
     @classmethod
-    def process(cls, job_pool: Union[JobPoolMI, JobPoolSI]) -> Schedule:
+    def process(cls, job_pool: Union[JobPoolMI, JobPool]) -> Schedule:
         g = Graph()
 
         constraints = {}

@@ -28,7 +28,7 @@ class JobScheduleMI(AbstractJobSchedule):
 
 
 @total_ordering
-class JobScheduleSI(AbstractJobSchedule):
+class JobSchedule(AbstractJobSchedule):
 
     def __init__(
             self,
@@ -36,7 +36,7 @@ class JobScheduleSI(AbstractJobSchedule):
             execution_start: int,
             execution_end: int,
     ) -> None:
-        super(JobScheduleSI, self).__init__(job, [TimeInterval(execution_start, execution_end)])
+        super(JobSchedule, self).__init__(job, [TimeInterval(execution_start, execution_end)])
 
     @property
     def execution_start(self) -> int:
@@ -55,7 +55,7 @@ class JobScheduleSI(AbstractJobSchedule):
         self.execution_intervals[0].end = execution_end
 
     def __str__(self) -> str:
-        return "JobScheduleSI(job={0}, execution_start={1}, execution_end={2})".format(
+        return "JobSchedule(job={0}, execution_start={1}, execution_end={2})".format(
             self.job,
             self.execution_start,
             self.execution_end,
@@ -63,10 +63,10 @@ class JobScheduleSI(AbstractJobSchedule):
 
     __repr__ = __str__
 
-    def __eq__(self, other: 'JobScheduleSI') -> bool:
+    def __eq__(self, other: 'JobSchedule') -> bool:
         return (self.execution_start, self.execution_end) == (other.execution_start, other.execution_end)
 
-    def __lt__(self, other: 'JobScheduleSI') -> bool:
+    def __lt__(self, other: 'JobSchedule') -> bool:
         return (self.execution_start, self.execution_end) < (other.execution_start, other.execution_end)
 
     def __hash__(self) -> int:

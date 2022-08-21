@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 from abc import ABC, abstractmethod
-from typing import Dict, Iterable, List, Optional
+from typing import Dict, Iterable, List
 from queue import PriorityQueue
 
-from models import UnitJobPoolSI, JobScheduleSI, Schedule, TimeInterval
+from models import UnitJobPool, JobSchedule, Schedule, TimeInterval
 from schedulers import AbstractScheduler
 from utils import DisjointSetNode
 
@@ -20,7 +20,7 @@ class AbstractUnitJobsScheduler(AbstractScheduler, ABC):
     def _update_deadline_for_job_schedule(
             cls,
             max_concurrency: int,
-            js: JobScheduleSI,
+            js: JobSchedule,
             t_to_count: Dict[int, int],
             t_to_node: Dict[int, DisjointSetNode],
     ) -> None:
@@ -39,22 +39,22 @@ class AbstractUnitJobsScheduler(AbstractScheduler, ABC):
 
     @classmethod
     @abstractmethod
-    def _phase_one(cls, max_concurrency: int, job_schedules: List[JobScheduleSI]) -> Iterable[JobScheduleSI]:
+    def _phase_one(cls, max_concurrency: int, job_schedules: List[JobSchedule]) -> Iterable[JobSchedule]:
         pass
 
     @classmethod
     @abstractmethod
-    def _phase_two(cls, max_concurrency: int, job_schedules: List[JobScheduleSI]) -> Iterable[JobScheduleSI]:
+    def _phase_two(cls, max_concurrency: int, job_schedules: List[JobSchedule]) -> Iterable[JobSchedule]:
         pass
 
     @classmethod
     @abstractmethod
-    def _get_active_time_slots(cls, job_schedules: List[JobScheduleSI]) -> Iterable[TimeInterval]:
+    def _get_active_time_slots(cls, job_schedules: List[JobSchedule]) -> Iterable[TimeInterval]:
         pass
 
     @classmethod
-    def process(cls, job_pool: UnitJobPoolSI, max_concurrency: int) -> Schedule:
-        job_schedules = [JobScheduleSI(job, job.release_time, job.deadline) for job in job_pool.jobs]
+    def process(cls, job_pool: UnitJobPool, max_concurrency: int) -> Schedule:
+        job_schedules = [JobSchedule(job, job.release_time, job.deadline) for job in job_pool.jobs]
 
         job_schedules = list(cls._phase_one(max_concurrency, job_schedules))
         job_schedules = list(cls._phase_two(max_concurrency, job_schedules))
@@ -69,7 +69,7 @@ class AbstractUnitJobsScheduler(AbstractScheduler, ABC):
 class UnitJobsSchedulerNLogN(AbstractUnitJobsScheduler):
 
     @classmethod
-    def _phase_one(cls, max_concurrency: int, job_schedules: List[JobScheduleSI]) -> Iterable[JobScheduleSI]:
+    def _phase_one(cls, max_concurrency: int, job_schedules: List[JobSchedule]) -> Iterable[JobSchedule]:
         jss_sorted_by_release_time = sorted(job_schedules)
 
         t_to_count = {}
@@ -79,7 +79,7 @@ class UnitJobsSchedulerNLogN(AbstractUnitJobsScheduler):
             yield from cls._update_deadline_for_job_schedule(max_concurrency, js, t_to_count, t_to_node)
 
     @classmethod
-    def _phase_two(cls, max_concurrency: int, job_schedules: List[JobScheduleSI]) -> Iterable[JobScheduleSI]:
+    def _phase_two(cls, max_concurrency: int, job_schedules: List[JobSchedule]) -> Iterable[JobSchedule]:
         jss_sorted_by_release_time = sorted(job_schedules)
 
         deadline_to_jss = {}
@@ -131,7 +131,7 @@ class UnitJobsSchedulerNLogN(AbstractUnitJobsScheduler):
                 yield js
 
     @classmethod
-    def _get_active_time_slots(cls, job_schedules: List[JobScheduleSI]) -> Iterable[TimeInterval]:
+    def _get_active_time_slots(cls, job_schedules: List[JobSchedule]) -> Iterable[TimeInterval]:
         active_time_intervals = [TimeInterval(js.execution_start, js.execution_end) for js in job_schedules]
 
         yield from TimeInterval.merge_time_intervals(active_time_intervals)
@@ -140,7 +140,7 @@ class UnitJobsSchedulerNLogN(AbstractUnitJobsScheduler):
 class UnitJobsSchedulerT(AbstractUnitJobsScheduler):
 
     @classmethod
-    def _phase_one(cls, max_concurrency: int, job_schedules: List[JobScheduleSI]) -> Iterable[JobScheduleSI]:
+    def _phase_one(cls, max_concurrency: int, job_schedules: List[JobSchedule]) -> Iterable[JobSchedule]:
         max_t = max(js.execution_end for js in job_schedules) + 1
 
         release_time_to_jss = {}
@@ -159,7 +159,7 @@ class UnitJobsSchedulerT(AbstractUnitJobsScheduler):
                 yield from cls._update_deadline_for_job_schedule(max_concurrency, js, t_to_count, t_to_node)
 
     @classmethod
-    def _phase_two(cls, max_concurrency: int, job_schedules: List[JobScheduleSI]) -> Iterable[JobScheduleSI]:
+    def _phase_two(cls, max_concurrency: int, job_schedules: List[JobSchedule]) -> Iterable[JobSchedule]:
         max_t = max(js.execution_end for js in job_schedules) + 1
 
         release_time_to_jss = {}
@@ -213,7 +213,7 @@ class UnitJobsSchedulerT(AbstractUnitJobsScheduler):
                 t_to_count[deadline] = max_concurrency
 
     @classmethod
-    def _get_active_time_slots(cls, job_schedules: List[JobScheduleSI]) -> Iterable[TimeInterval]:
+    def _get_active_time_slots(cls, job_schedules: List[JobSchedule]) -> Iterable[TimeInterval]:
         active_timestamps = set()
         for js in job_schedules:
             active_timestamps.add(js.execution_start)

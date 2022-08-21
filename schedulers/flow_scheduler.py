@@ -14,7 +14,7 @@ from networkx.algorithms.flow import (
 from random import shuffle
 from typing import Dict, Iterable, List, Set
 
-from models import Job, JobPoolSI, JobScheduleMI, Schedule, TimeInterval
+from models import Job, JobPool, JobScheduleMI, Schedule, TimeInterval
 from schedulers import AbstractScheduler
 from utils import ford_fulkerson
 
@@ -34,7 +34,7 @@ class AbstractFlowScheduler(AbstractScheduler, ABC):
         self.flow_method = flow_method
 
     @abstractmethod
-    def process(self, job_pool: JobPoolSI, max_concurrency: int) -> Schedule:
+    def process(self, job_pool: JobPool, max_concurrency: int) -> Schedule:
         pass
 
 
@@ -92,21 +92,21 @@ class FlowScheduler(AbstractFlowScheduler):
             yield JobScheduleMI(job, TimeInterval.merge_timestamps(job_active_timestamps))
 
     @staticmethod
-    def _get_t_ordering(job_pool: JobPoolSI) -> List[int]:
+    def _get_t_ordering(job_pool: JobPool) -> List[int]:
         min_t = min([job.release_time for job in job_pool.jobs])
         max_t = max([job.deadline for job in job_pool.jobs]) + 1
         return list(range(min_t, max_t + 1))
 
     def _apply_optimizations(
             self,
-            job_pool: JobPoolSI,
+            job_pool: JobPool,
             graph: DiGraph,
             active_timestamps: Set[int],
             max_concurrency: int,
     ) -> None:
         return
 
-    def process(self, job_pool: JobPoolSI, max_concurrency: int) -> Schedule:
+    def process(self, job_pool: JobPool, max_concurrency: int) -> Schedule:
         max_t = max([job.deadline for job in job_pool.jobs]) + 1
         duration_sum = sum([job.duration for job in job_pool.jobs])
 
@@ -146,7 +146,7 @@ class FlowLocalSearchScheduler(FlowScheduler):
 
     def _try_close_open(
             self,
-            job_pool: JobPoolSI,
+            job_pool: JobPool,
             graph: DiGraph,
             active_timestamps: Set[int],
             max_concurrency: int,
@@ -185,7 +185,7 @@ class FlowLocalSearchScheduler(FlowScheduler):
 
     def _apply_optimizations(
             self,
-            job_pool: JobPoolSI,
+            job_pool: JobPool,
             graph: DiGraph,
             active_timestamps: Set[int],
             max_concurrency: int,
@@ -199,7 +199,7 @@ class FlowLocalSearchScheduler(FlowScheduler):
 class FlowMinFeasScheduler(FlowScheduler):
 
     @staticmethod
-    def _get_t_ordering(job_pool: JobPoolSI) -> List[int]:
+    def _get_t_ordering(job_pool: JobPool) -> List[int]:
         t_ordering = FlowScheduler._get_t_ordering(job_pool)
         shuffle(t_ordering)
         return t_ordering
@@ -208,7 +208,7 @@ class FlowMinFeasScheduler(FlowScheduler):
 class FlowDensityFirstScheduler(FlowScheduler):
 
     @staticmethod
-    def _get_t_ordering(job_pool: JobPoolSI) -> List[int]:
+    def _get_t_ordering(job_pool: JobPool) -> List[int]:
         frequency = {}
         for job in job_pool.jobs:
             for t in range(job.release_time, job.deadline + 1):
@@ -308,7 +308,7 @@ class FlowIntervalScheduler(AbstractFlowScheduler):
 
             yield JobScheduleMI(job, TimeInterval.merge_time_intervals(active_intervals))
 
-    def process(self, job_pool: JobPoolSI, max_concurrency: int) -> Schedule:
+    def process(self, job_pool: JobPool, max_concurrency: int) -> Schedule:
         duration_sum = sum([job.duration for job in job_pool.jobs])
 
         release_time_timestamps = [job.release_time for job in job_pool.jobs]

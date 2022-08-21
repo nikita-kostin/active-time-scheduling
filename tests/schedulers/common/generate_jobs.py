@@ -4,7 +4,7 @@ from numpy.random import choice, randint, random
 from scipy.stats import norm
 from typing import Callable, Optional, Tuple
 
-from models import AbstractJobPool, JobPoolMI, JobPoolSI, Schedule, TimeInterval
+from models import AbstractJobPool, JobPoolMI, JobPool, Schedule, TimeInterval
 
 
 def _generate_job_attributes(max_t: int, length: int, duration_range: Tuple[int, int]) -> Tuple[int, int, int]:
@@ -21,8 +21,8 @@ def _generate_jobs_uniform_distribution(
         length_range: Tuple[int, int],
         duration_range: Tuple[int, int],
         is_feasible: Optional[Callable[[AbstractJobPool], Schedule]] = None,
-) -> JobPoolSI:
-    job_pool = JobPoolSI()
+) -> JobPool:
+    job_pool = JobPool()
 
     while job_pool.size != number_of_jobs:
         length = randint(length_range[0], length_range[1] + 1)
@@ -41,7 +41,7 @@ def generate_jobs_uniform_distribution(
         max_t: int,
         length_range: Tuple[int, int],
         duration_range: Tuple[int, int],
-) -> JobPoolSI:
+) -> JobPool:
     return _generate_jobs_uniform_distribution(number_of_jobs, max_t, length_range, duration_range)
 
 
@@ -51,7 +51,7 @@ def generate_feasible_jobs_uniform_distribution(
         length_range: Tuple[int, int],
         duration_range: Tuple[int, int],
         is_feasible: Optional[Callable[[AbstractJobPool], Schedule]],
-) -> JobPoolSI:
+) -> JobPool:
     return _generate_jobs_uniform_distribution(number_of_jobs, max_t, length_range, duration_range, is_feasible)
 
 
@@ -62,8 +62,8 @@ def _generate_jobs_normal_distribution(
         length_sigma: int,
         duration_range: Tuple[int, int],
         is_feasible: Optional[Callable[[AbstractJobPool], Schedule]] = None,
-) -> JobPoolSI:
-    job_pool = JobPoolSI()
+) -> JobPool:
+    job_pool = JobPool()
 
     possible_length = arange(1, max_t + 1)
     p = norm.cdf(
@@ -91,7 +91,7 @@ def generate_jobs_normal_distribution(
         length_mu: int,
         length_sigma: int,
         duration_range: Tuple[int, int],
-) -> JobPoolSI:
+) -> JobPool:
     return _generate_jobs_normal_distribution(number_of_jobs, max_t, length_mu, length_sigma, duration_range)
 
 
@@ -102,7 +102,7 @@ def generate_feasible_jobs_normal_distribution(
         length_sigma: int,
         duration_range: Tuple[int, int],
         is_feasible: Optional[Callable[[AbstractJobPool], Schedule]],
-) -> JobPoolSI:
+) -> JobPool:
     return _generate_jobs_normal_distribution(
         number_of_jobs, max_t, length_mu, length_sigma, duration_range, is_feasible
     )

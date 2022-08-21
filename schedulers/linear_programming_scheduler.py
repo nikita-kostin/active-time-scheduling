@@ -7,7 +7,7 @@ from scipy.linalg import LinAlgWarning
 from scipy.optimize import OptimizeResult, OptimizeWarning, linprog
 from typing import Dict, Iterable, List, Tuple, Union
 
-from models import JobPoolMI, JobPoolSI, JobScheduleMI, JobMI, Schedule, TimeInterval
+from models import JobMI, JobPool, JobPoolMI, JobScheduleMI, Schedule, TimeInterval
 from schedulers import AbstractScheduler, FlowScheduler
 from schedulers.flow_scheduler import FlowMethod
 
@@ -91,7 +91,7 @@ class LinearProgrammingArbitraryPreemptionScheduler(AbstractScheduler):
 
             yield job_schedule
 
-    def process(self, job_pool: Union[JobPoolMI, JobPoolSI], max_concurrency: int) -> Schedule:
+    def process(self, job_pool: Union[JobPoolMI, JobPool], max_concurrency: int) -> Schedule:
         # Disable precision warnings from old SciPy solvers
         warnings.simplefilter('ignore', LinAlgWarning)
         warnings.simplefilter('ignore', OptimizeWarning)
@@ -129,7 +129,7 @@ class LinearProgrammingArbitraryPreemptionScheduler(AbstractScheduler):
 
 class LinearProgrammingRoundedScheduler(LinearProgrammingArbitraryPreemptionScheduler, FlowScheduler):
 
-    def process(self, job_pool: JobPoolSI, max_concurrency: int) -> Schedule:
+    def process(self, job_pool: JobPool, max_concurrency: int) -> Schedule:
         schedule = super(LinearProgrammingRoundedScheduler, self).process(job_pool, max_concurrency)
 
         if schedule.all_jobs_scheduled is False:

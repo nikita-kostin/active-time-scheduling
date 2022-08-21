@@ -2,7 +2,7 @@
 from numpy import argmax
 from typing import Iterable, List, Optional
 
-from models import BatchJobSchedule, BatchJob, FixedLengthJobPoolSI, Schedule, TimeInterval
+from models import BatchJobSchedule, BatchJob, FixedLengthJobPool, Schedule, TimeInterval
 from schedulers import AbstractScheduler
 
 
@@ -10,7 +10,7 @@ class BatchScheduler(AbstractScheduler):
 
     @staticmethod
     def _construct_initial_schedule(
-            job_pool: FixedLengthJobPoolSI,
+            job_pool: FixedLengthJobPool,
             max_concurrency: int,
     ) -> Iterable[BatchJobSchedule]:
         jobs = sorted(job_pool.jobs)
@@ -84,7 +84,7 @@ class BatchScheduler(AbstractScheduler):
 
     @staticmethod
     def _compute_for_multiple_machines(
-            job_pool: FixedLengthJobPoolSI,
+            job_pool: FixedLengthJobPool,
             max_concurrency: int,
             number_of_machines: int,
     ) -> Optional[List[BatchJobSchedule]]:
@@ -117,7 +117,7 @@ class BatchScheduler(AbstractScheduler):
 
         return [batch for batch in batches if len(batch.jobs) != 0]
 
-    def process(self, job_pool: FixedLengthJobPoolSI, max_concurrency: int) -> Schedule:
+    def process(self, job_pool: FixedLengthJobPool, max_concurrency: int) -> Schedule:
         batches = self._compute_for_multiple_machines(job_pool, max_concurrency, 1)
 
         if batches is None:
