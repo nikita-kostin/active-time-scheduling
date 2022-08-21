@@ -112,6 +112,9 @@ class FlowScheduler(AbstractFlowScheduler):
         return
 
     def process(self, job_pool: JobPool, max_concurrency: int) -> Schedule:
+        if job_pool.size == 0:
+            return Schedule(True, [], [])
+
         max_t = max([job.deadline for job in job_pool.jobs]) + 1
         duration_sum = sum([job.duration for job in job_pool.jobs])
 
@@ -314,6 +317,9 @@ class FlowIntervalScheduler(AbstractFlowScheduler):
             yield JobScheduleMI(job, TimeInterval.merge_time_intervals(active_intervals))
 
     def process(self, job_pool: JobPool, max_concurrency: int) -> Schedule:
+        if job_pool.size == 0:
+            return Schedule(True, [], [])
+
         duration_sum = sum([job.duration for job in job_pool.jobs])
 
         release_time_timestamps = [job.release_time for job in job_pool.jobs]

@@ -54,6 +54,9 @@ class AbstractUnitJobsScheduler(AbstractScheduler, ABC):
 
     @classmethod
     def process(cls, job_pool: UnitJobPool, max_concurrency: int) -> Schedule:
+        if job_pool.size == 0:
+            return Schedule(True, [], [])
+
         job_schedules = [JobSchedule(job, job.release_time, job.deadline) for job in job_pool.jobs]
 
         job_schedules = list(cls._phase_one(max_concurrency, job_schedules))

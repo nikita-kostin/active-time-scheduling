@@ -3,7 +3,7 @@ import pytest
 from numpy.random import randint
 from typing import Type
 
-from models import JobPool
+from models import JobPool, TimeInterval
 from schedulers import (
     AbstractFlowScheduler,
     BruteForceScheduler,
@@ -17,8 +17,54 @@ from tests.schedulers.common import check_equality, check_2_approximation, gener
 
 class TestFlowScheduler(object):
 
+    @pytest.mark.parametrize('scheduler', [FlowIntervalScheduler, FlowScheduler])
+    def test_simple_examples(self, scheduler: Type[AbstractFlowScheduler]) -> None:
+        job_pool = JobPool()
+        job_pool.add_job(1, 4, 2)
+        job_pool.add_job(3, 8, 2)
+        job_pool.add_job(10, 11, 2)
+
+        schedule = scheduler().process(job_pool, 2)
+
+        assert schedule.all_jobs_scheduled is True
+        assert schedule.active_time_intervals == [
+            TimeInterval(3, 4),
+            TimeInterval(10, 11),
+        ]
+        assert len(schedule.job_schedules) == 3
+
+        job_pool = JobPool()
+        job_pool.add_job(1, 2, 2)
+        job_pool.add_job(1, 2, 2)
+
+        schedule = scheduler().process(job_pool, 1)
+
+        assert schedule.all_jobs_scheduled is False
+        assert schedule.active_time_intervals is None
+        assert schedule.job_schedules is None
+
+    @pytest.mark.parametrize('scheduler', [FlowIntervalScheduler, FlowScheduler])
+    def test_empty(self, scheduler: Type[AbstractFlowScheduler]) -> None:
+        job_pool = JobPool()
+
+        schedule = scheduler().process(job_pool, 2)
+
+        assert schedule.all_jobs_scheduled is True
+        assert schedule.active_time_intervals == []
+        assert len(schedule.job_schedules) == 0
+
+        job_pool = JobPool()
+        job_pool.add_job(1, 5, 0)
+        job_pool.add_job(3, 7, 0)
+
+        schedule = scheduler().process(job_pool, 2)
+
+        assert schedule.all_jobs_scheduled is True
+        assert schedule.active_time_intervals == []
+        assert len(schedule.job_schedules) == 2
+
     @pytest.mark.repeat(1000)
-    def test_interval_scheduler(self) -> None:
+    def test_against_each_other(self) -> None:
         max_length = randint(1, 5)
         max_t = randint(15, 31)
         max_concurrency = randint(1, 4)
@@ -86,7 +132,7 @@ class TestFlowScheduler(object):
         job_pool.add_job(1, 21, 10)
 
         schedule = scheduler().process(job_pool, 10)
-        active_time_slots_count = sum([ts.end - ts.start + 1 for ts in schedule.active_time_intervals])
 
         assert schedule.all_jobs_scheduled is True, schedule.all_jobs_scheduled
-        assert active_time_slots_count == 20, active_time_slots_count
+        assert sum(interval.duration for interval in schedule.active_time_intervals) == 20
+        assert len(schedule.job_schedules) == 20

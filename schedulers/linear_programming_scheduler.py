@@ -92,6 +92,9 @@ class LinearProgrammingArbitraryPreemptionScheduler(AbstractScheduler):
             yield job_schedule
 
     def process(self, job_pool: Union[JobPoolMI, JobPool], max_concurrency: int) -> Schedule:
+        if job_pool.size == 0:
+            return Schedule(True, [], [])
+
         # Disable precision warnings from old SciPy solvers
         warnings.simplefilter('ignore', LinAlgWarning)
         warnings.simplefilter('ignore', OptimizeWarning)
@@ -149,6 +152,9 @@ class LinearProgrammingRoundedScheduler(LinearProgrammingArbitraryPreemptionSche
 
             for t in range(deadline - 1, deadline - 1 - math.ceil(duration_sum), -1):
                 active_timestamps.add(t)
+
+        if len(active_timestamps) == 0:
+            return Schedule(True, [], [JobScheduleMI(job, []) for job in job_pool.jobs])
 
         max_t = max(active_timestamps) + 1
         graph = self._create_initial_graph(max_concurrency, max_t, job_pool.jobs)

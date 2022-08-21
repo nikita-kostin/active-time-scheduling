@@ -27,7 +27,10 @@ class BruteForceScheduler(FlowScheduler):
         if job_pool.size == 0:
             return Schedule(True, [], [])
 
-        max_t = max([interval.end for job in job_pool.jobs for interval in job.availability_intervals], default=0) + 1
+        max_t = max(
+            [interval.end for job in job_pool.jobs for interval in job.availability_intervals],
+            default=0,
+        ) + 1
         duration_sum = sum([job.duration for job in job_pool.jobs])
 
         active_timestamps = set()

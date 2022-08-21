@@ -2,6 +2,7 @@
 import pytest
 from random import randint
 
+from models import JobPool, TimeInterval
 from schedulers import (
     BruteForceScheduler,
     LinearProgrammingRoundedScheduler,
@@ -12,6 +13,25 @@ from tests.schedulers.common import check_2_approximation, generate_jobs_uniform
 
 
 class TestLinearProgrammingScheduler(object):
+
+    def test_empty(self) -> None:
+        job_pool = JobPool()
+
+        schedule = LinearProgrammingRoundedScheduler().process(job_pool, 2)
+
+        assert schedule.all_jobs_scheduled is True
+        assert schedule.active_time_intervals == []
+        assert len(schedule.job_schedules) == 0
+
+        job_pool = JobPool()
+        job_pool.add_job(1, 5, 0)
+        job_pool.add_job(3, 7, 0)
+
+        schedule = LinearProgrammingRoundedScheduler().process(job_pool, 2)
+
+        assert schedule.all_jobs_scheduled is True
+        assert schedule.active_time_intervals == []
+        assert len(schedule.job_schedules) == 2
 
     @pytest.mark.repeat(1000)
     def test_against_brute_force(self) -> None:
