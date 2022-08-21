@@ -21,7 +21,7 @@ class TestUnitJobsScheduler(object):
         job_pool = generate_jobs_uniform_distribution(number_of_jobs, max_t, (1, max_length), (1, 1))
 
         schedule_a = BruteForceScheduler().process(job_pool, max_concurrency)
-        schedule_b = scheduler_b().process(job_pool, max_concurrency)
+        schedule_b = scheduler_b().process(job_pool, max_concurrency)  # noqa
 
         check_equality(schedule_a, schedule_b, job_pool, max_concurrency)
 
@@ -34,7 +34,7 @@ class TestUnitJobsScheduler(object):
 
         job_pool = generate_jobs_uniform_distribution(number_of_jobs, max_t, (1, max_length), (1, 1))
 
-        schedule_a = UnitJobsSchedulerNLogN.process(job_pool, max_concurrency)
-        schedule_b = UnitJobsSchedulerT.process(job_pool, max_concurrency)
+        schedule_a = UnitJobsSchedulerNLogN.process(job_pool, max_concurrency)  # noqa
+        schedule_b = UnitJobsSchedulerT.process(job_pool, max_concurrency)  # noqa
 
         check_equality(schedule_a, schedule_b, job_pool, max_concurrency)

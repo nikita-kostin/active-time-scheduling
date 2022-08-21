@@ -22,7 +22,7 @@ class TestMatchingScheduler(object):
         job_pool = generate_jobs_uniform_distribution(number_of_jobs, max_t, (1, max_length), (1, 1))
 
         schedule_a = BruteForceScheduler().process(job_pool, 2)
-        schedule_b = MatchingScheduler().process(job_pool)
+        schedule_b = MatchingScheduler().process(job_pool)  # noqa
 
         check_equality(schedule_a, schedule_b, job_pool, 2)
 
@@ -34,8 +34,8 @@ class TestMatchingScheduler(object):
 
         job_pool = generate_jobs_uniform_distribution(number_of_jobs, max_t, (1, max_length), (1, 1))
 
-        schedule_a = UnitJobsSchedulerT().process(job_pool, 2)
-        schedule_b = MatchingScheduler().process(job_pool)
+        schedule_a = UnitJobsSchedulerT().process(job_pool, 2)  # noqa
+        schedule_b = MatchingScheduler().process(job_pool)  # noqa
 
         check_equality(schedule_a, schedule_b, job_pool, 2)
 

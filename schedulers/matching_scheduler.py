@@ -1,8 +1,18 @@
 # -*- coding: utf-8 -*-
 from networkx import Graph
-from typing import Any, Dict, List, Tuple, Set
+from typing import Any, Dict, Tuple, Set, Union
 
-from models import JobMI, JobPoolMI, JobScheduleMI, JobScheduleSI, Schedule, UnitJobPoolMI, TimeInterval
+from models import (
+    JobMI,
+    JobPoolMI,
+    JobPoolSI,
+    JobScheduleMI,
+    JobScheduleSI,
+    Schedule,
+    UnitJobPoolMI,
+    UnitJobPoolSI,
+    TimeInterval,
+)
 from schedulers import AbstractScheduler
 from utils import EdmondsBlossomMatching, UpperDegreeConstrainedSubgraph
 
@@ -13,7 +23,7 @@ class MatchingScheduler(AbstractScheduler):
     def _create_job_schedules_for_job(
             i: int,
             job: JobMI,
-            job_pool: JobPoolMI,
+            job_pool: Union[UnitJobPoolMI, UnitJobPoolSI],
             matching: Set[Tuple[int, int]],
     ) -> JobScheduleSI:
         for interval in job.availability_intervals:
@@ -24,7 +34,7 @@ class MatchingScheduler(AbstractScheduler):
                     return JobScheduleSI(job, t, t)
 
     @classmethod
-    def process(cls, job_pool: UnitJobPoolMI) -> Schedule:
+    def process(cls, job_pool: Union[UnitJobPoolMI, UnitJobPoolSI]) -> Schedule:
         graph = Graph()
 
         for i, job in enumerate(job_pool.jobs):
@@ -67,7 +77,7 @@ class UpperDegreeConstrainedSubgraphScheduler(AbstractScheduler):
     @staticmethod
     def _create_job_schedules_for_job(
             i: int,
-            job_pool: JobPoolMI,
+            job_pool: Union[JobPoolMI, JobPoolSI],
             job: JobMI,
             dcs: Dict[Any, Set[Any]],
     ) -> JobScheduleMI:
@@ -82,7 +92,7 @@ class UpperDegreeConstrainedSubgraphScheduler(AbstractScheduler):
         return JobScheduleMI(job, TimeInterval.merge_timestamps(active_timestamps))
 
     @classmethod
-    def process(cls, job_pool: JobPoolMI) -> Schedule:
+    def process(cls, job_pool: Union[JobPoolMI, JobPoolSI]) -> Schedule:
         g = Graph()
 
         constraints = {}

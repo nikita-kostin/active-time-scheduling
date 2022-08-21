@@ -56,7 +56,7 @@ class TestFlowScheduler(object):
 
         job_pool = generate_jobs_uniform_distribution(number_of_jobs, max_t, (1, max_length), (1, 1))
 
-        schedule_a = UnitJobsSchedulerT().process(job_pool, max_concurrency)
+        schedule_a = UnitJobsSchedulerT().process(job_pool, max_concurrency)  # noqa
         schedule_b = scheduler_b().process(job_pool, max_concurrency)
 
         check_2_approximation(schedule_a, schedule_b, job_pool, max_concurrency)

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from abc import ABC, abstractmethod
 
-from models import AbstractJobPool, Schedule
+from models import Schedule
 
 
 class AbstractScheduler(ABC):

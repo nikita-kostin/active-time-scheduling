@@ -5,7 +5,7 @@ from enum import Enum
 from networkx import maximum_flow
 from scipy.linalg import LinAlgWarning
 from scipy.optimize import OptimizeResult, OptimizeWarning, linprog
-from typing import Dict, Iterable, List, Tuple
+from typing import Dict, Iterable, List, Tuple, Union
 
 from models import JobPoolMI, JobPoolSI, JobScheduleMI, JobMI, Schedule, TimeInterval
 from schedulers import AbstractScheduler, FlowScheduler
@@ -91,7 +91,7 @@ class LinearProgrammingArbitraryPreemptionScheduler(AbstractScheduler):
 
             yield job_schedule
 
-    def process(self, job_pool: JobPoolMI, max_concurrency: int) -> Schedule:
+    def process(self, job_pool: Union[JobPoolMI, JobPoolSI], max_concurrency: int) -> Schedule:
         # Disable precision warnings from old SciPy solvers
         warnings.simplefilter('ignore', LinAlgWarning)
         warnings.simplefilter('ignore', OptimizeWarning)
