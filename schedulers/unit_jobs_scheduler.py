@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from abc import ABC, abstractmethod
-from typing import Dict, Iterable, List
+from typing import Dict, Iterable, List, Optional
 from queue import PriorityQueue
 
 from models import UnitJobPoolSI, JobScheduleSI, Schedule, TimeInterval
@@ -53,7 +53,10 @@ class AbstractUnitJobsScheduler(AbstractScheduler, ABC):
         pass
 
     @classmethod
-    def process(cls, job_pool: UnitJobPoolSI, max_concurrency: int) -> Schedule:
+    def process(cls, job_pool: UnitJobPoolSI, max_concurrency: Optional[int] = None, **kwargs) -> Schedule:
+        if max_concurrency is None:
+            raise ValueError('max_concurrency should not be None')
+
         job_schedules = [JobScheduleSI(job, job.release_time, job.deadline) for job in job_pool.jobs]
 
         job_schedules = list(cls._phase_one(max_concurrency, job_schedules))

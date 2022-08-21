@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from abc import ABC, abstractmethod
-from copy import deepcopy
 from enum import Enum
 from itertools import permutations
 from networkx import DiGraph
@@ -13,7 +12,7 @@ from networkx.algorithms.flow import (
     boykov_kolmogorov,
 )
 from random import shuffle
-from typing import Dict, Iterable, List, Set
+from typing import Dict, Iterable, List, Optional, Set
 
 from models import Job, JobPoolSI, JobScheduleMI, Schedule, TimeInterval
 from schedulers import AbstractScheduler
@@ -35,7 +34,7 @@ class AbstractFlowScheduler(AbstractScheduler, ABC):
         self.flow_method = flow_method
 
     @abstractmethod
-    def process(self, job_pool: JobPoolSI, max_concurrency: int) -> Schedule:
+    def process(self, job_pool: JobPoolSI, max_concurrency: Optional[int] = None, **kwargs) -> Schedule:
         pass
 
 
@@ -107,7 +106,10 @@ class FlowScheduler(AbstractFlowScheduler):
     ) -> None:
         return
 
-    def process(self, job_pool: JobPoolSI, max_concurrency: int) -> Schedule:
+    def process(self, job_pool: JobPoolSI, max_concurrency: Optional[int] = None, **kwargs) -> Schedule:
+        if max_concurrency is None:
+            raise ValueError('max_concurrency should not be None')
+
         max_t = max([job.deadline for job in job_pool.jobs]) + 1
         duration_sum = sum([job.duration for job in job_pool.jobs])
 
@@ -309,7 +311,10 @@ class FlowIntervalScheduler(AbstractFlowScheduler):
 
             yield JobScheduleMI(job, TimeInterval.merge_time_intervals(active_intervals))
 
-    def process(self, job_pool: JobPoolSI, max_concurrency: int) -> Schedule:
+    def process(self, job_pool: JobPoolSI, max_concurrency: Optional[int] = None, **kwargs) -> Schedule:
+        if max_concurrency is None:
+            raise ValueError('max_concurrency should not be None')
+
         duration_sum = sum([job.duration for job in job_pool.jobs])
 
         release_time_timestamps = [job.release_time for job in job_pool.jobs]

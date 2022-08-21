@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from networkx.algorithms.flow import maximum_flow
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 from models import Job, JobPoolMI, Schedule, TimeInterval
 from schedulers import FlowScheduler
@@ -23,7 +23,10 @@ class BruteForceScheduler(FlowScheduler):
 
         return maximum_flow(graph, 0, 1 + len(jobs) + max_t, flow_func=self.flow_method)
 
-    def process(self, job_pool: JobPoolMI, max_concurrency: int) -> Schedule:
+    def process(self, job_pool: JobPoolMI, max_concurrency: Optional[int] = None, **kwargs) -> Schedule:
+        if max_concurrency is None:
+            raise ValueError('max_concurrency should not be None')
+
         max_t = max([job.deadline for job in job_pool.jobs]) + 1
         duration_sum = sum([job.duration for job in job_pool.jobs])
 
