@@ -118,6 +118,9 @@ class BatchScheduler(AbstractScheduler):
         return [batch for batch in batches if len(batch.jobs) != 0]
 
     def process(self, job_pool: FixedLengthJobPool, max_concurrency: int) -> Schedule:
+        if job_pool.size == 0:
+            return Schedule(True, [], [])
+
         batches = self._compute_for_multiple_machines(job_pool, max_concurrency, 1)
 
         if batches is None:
