@@ -2,7 +2,7 @@
 import pytest
 from random import randint
 
-from models import JobPool, TimeInterval
+from models import JobPool
 from schedulers import (
     BruteForceScheduler,
     LinearProgrammingRoundedScheduler,
