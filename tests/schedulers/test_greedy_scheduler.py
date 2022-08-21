@@ -5,20 +5,20 @@ from typing import Type
 
 from models import JobPool, TimeInterval
 from schedulers import (
-    AbstractFlowScheduler,
+    AbstractGreedyScheduler,
     BruteForceScheduler,
-    FlowIntervalScheduler,
-    FlowScheduler,
-    UnitJobsSchedulerT,
+    GreedyIntervalsScheduler,
+    GreedyScheduler,
+    LazyActivationSchedulerT,
     UpperDegreeConstrainedSubgraphScheduler,
 )
 from tests.schedulers.common import check_equality, check_2_approximation, generate_jobs_uniform_distribution
 
 
-class TestFlowScheduler(object):
+class TestGreedyScheduler(object):
 
-    @pytest.mark.parametrize('scheduler', [FlowIntervalScheduler, FlowScheduler])
-    def test_simple_examples(self, scheduler: Type[AbstractFlowScheduler]) -> None:
+    @pytest.mark.parametrize('scheduler', [GreedyIntervalsScheduler, GreedyScheduler])
+    def test_simple_examples(self, scheduler: Type[AbstractGreedyScheduler]) -> None:
         job_pool = JobPool()
         job_pool.add_job(1, 4, 2)
         job_pool.add_job(3, 8, 2)
@@ -43,8 +43,8 @@ class TestFlowScheduler(object):
         assert schedule.active_time_intervals is None
         assert schedule.job_schedules is None
 
-    @pytest.mark.parametrize('scheduler', [FlowIntervalScheduler, FlowScheduler])
-    def test_empty(self, scheduler: Type[AbstractFlowScheduler]) -> None:
+    @pytest.mark.parametrize('scheduler', [GreedyIntervalsScheduler, GreedyScheduler])
+    def test_empty(self, scheduler: Type[AbstractGreedyScheduler]) -> None:
         job_pool = JobPool()
 
         schedule = scheduler().process(job_pool, 2)
@@ -72,14 +72,14 @@ class TestFlowScheduler(object):
 
         job_pool = generate_jobs_uniform_distribution(number_of_jobs, max_t, (1, max_length), (1, max_length))
 
-        schedule_a = FlowScheduler().process(job_pool, max_concurrency)
-        schedule_b = FlowIntervalScheduler().process(job_pool, max_concurrency)
+        schedule_a = GreedyScheduler().process(job_pool, max_concurrency)
+        schedule_b = GreedyIntervalsScheduler().process(job_pool, max_concurrency)
 
         check_equality(schedule_a, schedule_b, job_pool, max_concurrency)
 
     @pytest.mark.repeat(1000)
-    @pytest.mark.parametrize('scheduler_b', [FlowIntervalScheduler, FlowScheduler])
-    def test_against_brute_force(self, scheduler_b: Type[AbstractFlowScheduler]) -> None:
+    @pytest.mark.parametrize('scheduler_b', [GreedyIntervalsScheduler, GreedyScheduler])
+    def test_against_brute_force(self, scheduler_b: Type[AbstractGreedyScheduler]) -> None:
         max_length = randint(1, 5)
         max_t = randint(4, 9)
         max_concurrency = randint(1, 4)
@@ -93,8 +93,8 @@ class TestFlowScheduler(object):
         check_2_approximation(schedule_a, schedule_b, job_pool, max_concurrency)
 
     @pytest.mark.repeat(1000)
-    @pytest.mark.parametrize('scheduler_b', [FlowIntervalScheduler, FlowScheduler])
-    def test_against_lazy_activation(self, scheduler_b: Type[AbstractFlowScheduler]) -> None:
+    @pytest.mark.parametrize('scheduler_b', [GreedyIntervalsScheduler, GreedyScheduler])
+    def test_against_lazy_activation(self, scheduler_b: Type[AbstractGreedyScheduler]) -> None:
         max_length = randint(1, 5)
         max_t = randint(15, 31)
         max_concurrency = randint(1, 4)
@@ -102,14 +102,14 @@ class TestFlowScheduler(object):
 
         job_pool = generate_jobs_uniform_distribution(number_of_jobs, max_t, (1, max_length), (1, 1))
 
-        schedule_a = UnitJobsSchedulerT().process(job_pool, max_concurrency)  # noqa
+        schedule_a = LazyActivationSchedulerT().process(job_pool, max_concurrency)  # noqa
         schedule_b = scheduler_b().process(job_pool, max_concurrency)
 
         check_2_approximation(schedule_a, schedule_b, job_pool, max_concurrency)
 
     @pytest.mark.repeat(1000)
-    @pytest.mark.parametrize('scheduler_b', [FlowIntervalScheduler, FlowScheduler])
-    def test_against_udcs(self, scheduler_b: Type[AbstractFlowScheduler]) -> None:
+    @pytest.mark.parametrize('scheduler_b', [GreedyIntervalsScheduler, GreedyScheduler])
+    def test_against_udcs(self, scheduler_b: Type[AbstractGreedyScheduler]) -> None:
         max_length = randint(5, 11)
         max_t = randint(15, 31)
         number_of_jobs = randint(1, max_t // max_length * 2 + 1)
@@ -121,8 +121,8 @@ class TestFlowScheduler(object):
 
         check_2_approximation(schedule_a, schedule_b, job_pool, 2)
 
-    @pytest.mark.parametrize('scheduler', [FlowIntervalScheduler, FlowScheduler])
-    def test_tight_example(self, scheduler: Type[AbstractFlowScheduler]) -> None:
+    @pytest.mark.parametrize('scheduler', [GreedyIntervalsScheduler, GreedyScheduler])
+    def test_tight_example(self, scheduler: Type[AbstractGreedyScheduler]) -> None:
         job_pool = JobPool()
 
         for _ in range(10):

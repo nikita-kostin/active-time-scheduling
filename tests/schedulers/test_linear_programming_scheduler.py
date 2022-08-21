@@ -5,8 +5,8 @@ from random import randint
 from models import JobPool
 from schedulers import (
     BruteForceScheduler,
+    LazyActivationSchedulerT,
     LinearProgrammingRoundedScheduler,
-    UnitJobsSchedulerT,
     UpperDegreeConstrainedSubgraphScheduler,
 )
 from tests.schedulers.common import check_2_approximation, generate_jobs_uniform_distribution
@@ -56,7 +56,7 @@ class TestLinearProgrammingScheduler(object):
 
         job_pool = generate_jobs_uniform_distribution(number_of_jobs, max_t, (1, max_length), (1, 1))
 
-        schedule_a = UnitJobsSchedulerT().process(job_pool, max_concurrency)  # noqa
+        schedule_a = LazyActivationSchedulerT().process(job_pool, max_concurrency)  # noqa
         schedule_b = LinearProgrammingRoundedScheduler().process(job_pool, max_concurrency)
 
         check_2_approximation(schedule_a, schedule_b, job_pool, max_concurrency)

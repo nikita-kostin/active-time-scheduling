@@ -8,7 +8,7 @@ from schedulers import AbstractScheduler
 from utils import DisjointSetNode
 
 
-class AbstractUnitJobsScheduler(AbstractScheduler, ABC):
+class AbstractLazyActivationScheduler(AbstractScheduler, ABC):
 
     @staticmethod
     def _init_for_timestamp(t: int, t_to_count: Dict[int, int], t_to_node: Dict[int, DisjointSetNode]) -> None:
@@ -69,7 +69,7 @@ class AbstractUnitJobsScheduler(AbstractScheduler, ABC):
         )
 
 
-class UnitJobsSchedulerNLogN(AbstractUnitJobsScheduler):
+class LazyActivationSchedulerNLogN(AbstractLazyActivationScheduler):
 
     @classmethod
     def _phase_one(cls, max_concurrency: int, job_schedules: List[JobSchedule]) -> Iterable[JobSchedule]:
@@ -140,7 +140,7 @@ class UnitJobsSchedulerNLogN(AbstractUnitJobsScheduler):
         yield from TimeInterval.merge_time_intervals(active_time_intervals)
 
 
-class UnitJobsSchedulerT(AbstractUnitJobsScheduler):
+class LazyActivationSchedulerT(AbstractLazyActivationScheduler):
 
     @classmethod
     def _phase_one(cls, max_concurrency: int, job_schedules: List[JobSchedule]) -> Iterable[JobSchedule]:
@@ -224,4 +224,4 @@ class UnitJobsSchedulerT(AbstractUnitJobsScheduler):
         yield from TimeInterval.merge_timestamps(active_timestamps)
 
 
-UnitJobsScheduler = UnitJobsSchedulerT
+LazyActivationScheduler = LazyActivationSchedulerT

@@ -9,10 +9,10 @@ from create_image import create_image_from_schedule
 from models import Job, Schedule
 from schedulers import (
     BruteForceScheduler,
-    FlowScheduler,
-    LinearProgrammingArbitraryPreemptionScheduler,
+    GreedyScheduler,
+    LinearProgrammingScheduler,
     MatchingScheduler,
-    UnitJobsScheduler,
+    LazyActivationScheduler,
 )
 
 
@@ -73,10 +73,10 @@ def parse_args() -> Namespace:
 def process_case(solver: Scheduler, max_concurrency: int, jobs: List[Job]) -> Schedule:
     return {
         Scheduler.brute_force_scheduler: BruteForceScheduler,
-        Scheduler.flow_scheduler: FlowScheduler,
-        Scheduler.linear_programming_arbitrary_preemption_scheduler: LinearProgrammingArbitraryPreemptionScheduler,
+        Scheduler.flow_scheduler: GreedyScheduler,
+        Scheduler.linear_programming_arbitrary_preemption_scheduler: LinearProgrammingScheduler,
         Scheduler.matching_scheduler: MatchingScheduler,
-        Scheduler.unit_jobs_scheduler: UnitJobsScheduler,
+        Scheduler.unit_jobs_scheduler: LazyActivationScheduler,
     }[solver]().process(max_concurrency, jobs)
 
 

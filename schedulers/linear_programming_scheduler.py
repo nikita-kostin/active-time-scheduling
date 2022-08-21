@@ -8,8 +8,8 @@ from scipy.optimize import OptimizeResult, OptimizeWarning, linprog
 from typing import Dict, Iterable, List, Tuple, Union
 
 from models import JobMI, JobPool, JobPoolMI, JobScheduleMI, Schedule, TimeInterval
-from schedulers import AbstractScheduler, FlowScheduler
-from schedulers.flow_scheduler import FlowMethod
+from schedulers import AbstractScheduler, GreedyScheduler
+from schedulers.greedy_scheduler import FlowMethod
 
 
 class LinearProgrammingMethod(str, Enum):
@@ -21,7 +21,7 @@ class LinearProgrammingMethod(str, Enum):
     simplex = 'simplex'
 
 
-class LinearProgrammingArbitraryPreemptionScheduler(AbstractScheduler):
+class LinearProgrammingScheduler(AbstractScheduler):
 
     EPS = 1e-7
 
@@ -130,7 +130,7 @@ class LinearProgrammingArbitraryPreemptionScheduler(AbstractScheduler):
         )
 
 
-class LinearProgrammingRoundedScheduler(LinearProgrammingArbitraryPreemptionScheduler, FlowScheduler):
+class LinearProgrammingRoundedScheduler(LinearProgrammingScheduler, GreedyScheduler):
 
     def process(self, job_pool: JobPool, max_concurrency: int) -> Schedule:
         schedule = super(LinearProgrammingRoundedScheduler, self).process(job_pool, max_concurrency)
@@ -168,5 +168,5 @@ class LinearProgrammingRoundedScheduler(LinearProgrammingArbitraryPreemptionSche
         return Schedule(
             True,
             TimeInterval.merge_timestamps(active_timestamps),
-            list(FlowScheduler._create_job_schedules(job_pool.jobs, flow_dict)),
+            list(GreedyScheduler._create_job_schedules(job_pool.jobs, flow_dict)),
         )

@@ -5,8 +5,8 @@ from random import randint, random
 from models import JobPoolMI, TimeInterval, UnitJobPoolMI
 from schedulers import (
     BruteForceScheduler,
+    LazyActivationSchedulerT,
     MatchingScheduler,
-    UnitJobsSchedulerT,
     UpperDegreeConstrainedSubgraphScheduler,
 )
 from tests.schedulers.common import check_equality, generate_jobs_uniform_distribution, generate_mi_jobs
@@ -140,7 +140,7 @@ class TestMatchingScheduler(object):
 
         job_pool = generate_jobs_uniform_distribution(number_of_jobs, max_t, (1, max_length), (1, 1))
 
-        schedule_a = UnitJobsSchedulerT().process(job_pool, 2)  # noqa
+        schedule_a = LazyActivationSchedulerT().process(job_pool, 2)  # noqa
         schedule_b = MatchingScheduler().process(job_pool)  # noqa
 
         check_equality(schedule_a, schedule_b, job_pool, 2)

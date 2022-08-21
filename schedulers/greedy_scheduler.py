@@ -28,7 +28,7 @@ class FlowMethod(Enum):
     ford_fulkerson = ford_fulkerson
 
 
-class AbstractFlowScheduler(AbstractScheduler, ABC):
+class AbstractGreedyScheduler(AbstractScheduler, ABC):
 
     def __init__(self, flow_method: FlowMethod = FlowMethod.preflow_push) -> None:
         self.flow_method = flow_method
@@ -38,7 +38,7 @@ class AbstractFlowScheduler(AbstractScheduler, ABC):
         pass
 
 
-class FlowScheduler(AbstractFlowScheduler):
+class GreedyScheduler(AbstractGreedyScheduler):
 
     @staticmethod
     def _create_initial_graph(
@@ -150,7 +150,7 @@ class FlowScheduler(AbstractFlowScheduler):
         )
 
 
-class FlowLocalSearchScheduler(FlowScheduler):
+class GreedyLocalSearchScheduler(GreedyScheduler):
 
     def _try_close_open(
             self,
@@ -204,16 +204,7 @@ class FlowLocalSearchScheduler(FlowScheduler):
             any_improvements = self._try_close_open(job_pool, graph, active_timestamps, max_concurrency)
 
 
-class FlowMinFeasScheduler(FlowScheduler):
-
-    @staticmethod
-    def _get_t_ordering(job_pool: JobPool) -> List[int]:
-        t_ordering = FlowScheduler._get_t_ordering(job_pool)
-        shuffle(t_ordering)
-        return t_ordering
-
-
-class FlowDensityFirstScheduler(FlowScheduler):
+class GreedyDensityFirstScheduler(GreedyScheduler):
 
     @staticmethod
     def _get_t_ordering(job_pool: JobPool) -> List[int]:
@@ -228,7 +219,7 @@ class FlowDensityFirstScheduler(FlowScheduler):
         return [t for _, t in t_ordering]
 
 
-class FlowIntervalScheduler(AbstractFlowScheduler):
+class GreedyIntervalsScheduler(AbstractGreedyScheduler):
 
     @staticmethod
     def _create_initial_graph(
@@ -283,7 +274,7 @@ class FlowIntervalScheduler(AbstractFlowScheduler):
             max_concurrency: int,
             delta: int,
     ) -> None:
-        FlowIntervalScheduler._extend_interval(jobs, i, intervals, graph, max_concurrency, -delta)
+        GreedyIntervalsScheduler._extend_interval(jobs, i, intervals, graph, max_concurrency, -delta)
 
     @staticmethod
     def _create_job_schedules(
@@ -373,3 +364,12 @@ class FlowIntervalScheduler(AbstractFlowScheduler):
             TimeInterval.merge_time_intervals(active_intervals),
             list(self._create_job_schedules(job_pool.jobs, intervals, flow_dict)),
         )
+
+
+class MinFeasScheduler(GreedyScheduler):
+
+    @staticmethod
+    def _get_t_ordering(job_pool: JobPool) -> List[int]:
+        t_ordering = GreedyScheduler._get_t_ordering(job_pool)
+        shuffle(t_ordering)
+        return t_ordering

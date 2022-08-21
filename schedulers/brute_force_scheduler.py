@@ -3,10 +3,10 @@ from networkx.algorithms.flow import maximum_flow
 from typing import Dict, List, Set, Tuple, Union
 
 from models import JobMI, JobPool, JobPoolMI, Schedule, TimeInterval
-from schedulers import FlowScheduler
+from schedulers import GreedyScheduler
 
 
-class BruteForceScheduler(FlowScheduler):
+class BruteForceScheduler(GreedyScheduler):
 
     def _compute_flow(
             self,
