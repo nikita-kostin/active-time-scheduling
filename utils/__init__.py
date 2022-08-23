@@ -5,11 +5,11 @@ from .maximum_flow import FordFulkerson, ford_fulkerson
 from .maximum_matching import EdmondsBlossomMatching, UpperDegreeConstrainedSubgraph
 
 __all__ = [
-    DisjointSetNode,
-    EdmondsBlossomMatching,
-    FordFulkerson,
-    UpperDegreeConstrainedSubgraph,
-    ford_fulkerson,
-    save_image_from_schedule,
-    show_image_from_schedule,
+    'DisjointSetNode',
+    'EdmondsBlossomMatching',
+    'FordFulkerson',
+    'UpperDegreeConstrainedSubgraph',
+    'ford_fulkerson',
+    'save_image_from_schedule',
+    'show_image_from_schedule',
 ]
