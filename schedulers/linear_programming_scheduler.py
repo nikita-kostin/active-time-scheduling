@@ -13,19 +13,19 @@ from schedulers.greedy_scheduler import FlowMethod
 
 
 class LinearProgrammingMethod(str, Enum):
-    highs_ds = 'highs-ds'
-    highs_ipm = 'highs-ipm'
-    highs = 'highs'
-    interior_point = 'interior-point'
-    revised_simplex = 'revised simplex'
-    simplex = 'simplex'
+    HIGHS_DS = 'highs-ds'
+    HIGHS_IPM = 'highs-ipm'
+    HIGHS = 'highs'
+    INTERIOR_POINT = 'interior-point'
+    REVISED_SIMPLEX = 'revised simplex'
+    SIMPLEX = 'simplex'
 
 
 class LinearProgrammingScheduler(AbstractScheduler):
 
     EPS = 1e-7
 
-    def __init__(self, lp_method: LinearProgrammingMethod = LinearProgrammingMethod.highs) -> None:
+    def __init__(self, lp_method: LinearProgrammingMethod = LinearProgrammingMethod.HIGHS) -> None:
         self.lp_method = lp_method
 
     @staticmethod
@@ -134,8 +134,8 @@ class LinearProgrammingRoundedScheduler(GreedyScheduler):
 
     def __init__(
             self,
-            lp_method: LinearProgrammingMethod = LinearProgrammingMethod.highs,
-            flow_method: FlowMethod = FlowMethod.preflow_push,
+            lp_method: LinearProgrammingMethod = LinearProgrammingMethod.HIGHS,
+            flow_method: FlowMethod = FlowMethod.PREFLOW_PUSH,
     ) -> None:
         super(LinearProgrammingRoundedScheduler, self).__init__(flow_method)
         self.linear_programming_scheduler = LinearProgrammingScheduler(lp_method)

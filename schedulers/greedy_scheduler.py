@@ -20,17 +20,17 @@ from utils import ford_fulkerson
 
 
 class FlowMethod(str, Enum):
-    edmonds_karp = 'edmonds_karp'
-    shortest_augmenting_path = 'shortest_augmenting_path'
-    preflow_push = 'preflow_push'
-    dinitz = 'dinitz'
-    boykov_kolmogorov = 'boykov_kolmogorov'
-    ford_fulkerson = 'ford_fulkerson'
+    EDMONDS_KARP = 'edmonds_karp'
+    SHORTEST_AUGMENTING_PATH = 'shortest_augmenting_path'
+    PREFLOW_PUSH = 'preflow_push'
+    DINITZ = 'dinitz'
+    BOYKOV_KOLMOGOROV = 'boykov_kolmogorov'
+    FORD_FULKERSON = 'ford_fulkerson'
 
 
 class AbstractGreedyScheduler(AbstractScheduler, ABC):
 
-    def __init__(self, flow_method: FlowMethod = FlowMethod.preflow_push) -> None:
+    def __init__(self, flow_method: FlowMethod = FlowMethod.PREFLOW_PUSH) -> None:
         self.flow_method = flow_method
 
     @property
