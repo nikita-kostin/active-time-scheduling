@@ -3,6 +3,7 @@ from .abstract_scheduler import AbstractScheduler
 from .batch_scheduler import BatchScheduler
 from .greedy_scheduler import (
     AbstractGreedyScheduler,
+    FlowMethod,
     GreedyDensityFirstScheduler,
     GreedyIntervalsScheduler,
     GreedyScheduler,
@@ -11,6 +12,7 @@ from .greedy_scheduler import (
 from .brute_force_scheduler import BruteForceScheduler
 from .lazy_activation_scheduler import LazyActivationScheduler, LazyActivationSchedulerNLogN, LazyActivationSchedulerT
 from .linear_programming_scheduler import (
+    LinearProgrammingMethod,
     LinearProgrammingScheduler,
     LinearProgrammingRoundedScheduler,
 )
@@ -21,12 +23,14 @@ __all__ = [
     AbstractScheduler,
     BatchScheduler,
     BruteForceScheduler,
+    FlowMethod,
     GreedyDensityFirstScheduler,
     GreedyIntervalsScheduler,
     GreedyScheduler,
     LazyActivationScheduler,
     LazyActivationSchedulerNLogN,
     LazyActivationSchedulerT,
+    LinearProgrammingMethod,
     LinearProgrammingScheduler,
     LinearProgrammingRoundedScheduler,
     MatchingScheduler,
