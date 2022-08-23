@@ -5,7 +5,7 @@ from argparse import ArgumentParser, Namespace
 from enum import Enum
 from typing import List
 
-from create_image import create_image_from_schedule
+from utils import save_image_from_schedule
 from models import Job, Schedule
 from schedulers import (
     BruteForceScheduler,
@@ -112,7 +112,7 @@ def main() -> None:
             if os.path.isdir(args.output_images_folder) is False:
                 os.mkdir(args.output_images_folder)
 
-            create_image_from_schedule(
+            save_image_from_schedule(
                 max_concurrency,
                 jobs,
                 schedule,
