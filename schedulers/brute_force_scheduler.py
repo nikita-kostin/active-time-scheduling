@@ -21,7 +21,7 @@ class BruteForceScheduler(GreedyScheduler):
             if t in active_timestamps:
                 self._open_time_slot(t, jobs, graph)
 
-        return maximum_flow(graph, 0, 1 + len(jobs) + max_t, flow_func=self.flow_method)
+        return maximum_flow(graph, 0, 1 + len(jobs) + max_t, flow_func=self.flow_func)  # noqa
 
     def process(self, job_pool: Union[JobPoolMI, JobPool], max_concurrency: int) -> Schedule:
         if job_pool.size == 0:

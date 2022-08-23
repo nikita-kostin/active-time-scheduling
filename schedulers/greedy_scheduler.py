@@ -12,26 +12,37 @@ from networkx.algorithms.flow import (
     boykov_kolmogorov,
 )
 from random import shuffle
-from typing import Dict, Iterable, List, Set
+from typing import Callable, Dict, Iterable, List, Set
 
 from models import Job, JobMI, JobPool, JobScheduleMI, Schedule, TimeInterval
 from schedulers import AbstractScheduler
 from utils import ford_fulkerson
 
 
-class FlowMethod(Enum):
-    edmonds_karp = edmonds_karp
-    shortest_augmenting_path = shortest_augmenting_path
-    preflow_push = preflow_push
-    dinitz = dinitz
-    boykov_kolmogorov = boykov_kolmogorov
-    ford_fulkerson = ford_fulkerson
+class FlowMethod(str, Enum):
+    edmonds_karp = 'edmonds_karp'
+    shortest_augmenting_path = 'shortest_augmenting_path'
+    preflow_push = 'preflow_push'
+    dinitz = 'dinitz'
+    boykov_kolmogorov = 'boykov_kolmogorov'
+    ford_fulkerson = 'ford_fulkerson'
 
 
 class AbstractGreedyScheduler(AbstractScheduler, ABC):
 
     def __init__(self, flow_method: FlowMethod = FlowMethod.preflow_push) -> None:
         self.flow_method = flow_method
+
+    @property
+    def flow_func(self) -> Callable:
+        return {
+            'edmonds_karp': edmonds_karp,
+            'shortest_augmenting_path': shortest_augmenting_path,
+            'preflow_push': preflow_push,
+            'dinitz': dinitz,
+            'boykov_kolmogorov': boykov_kolmogorov,
+            'ford_fulkerson': ford_fulkerson,
+        }[self.flow_method]
 
     @abstractmethod
     def process(self, job_pool: JobPool, max_concurrency: int) -> Schedule:
@@ -123,7 +134,7 @@ class GreedyScheduler(AbstractGreedyScheduler):
         for t in range(max_t):
             self._open_time_slot(t, job_pool.jobs, graph)
 
-        flow_value, _ = maximum_flow(graph, 0, 1 + len(job_pool.jobs) + max_t, flow_func=self.flow_method)
+        flow_value, _ = maximum_flow(graph, 0, 1 + len(job_pool.jobs) + max_t, flow_func=self.flow_func)  # noqa
 
         if flow_value < duration_sum:
             return Schedule(False, None, None)
@@ -133,13 +144,13 @@ class GreedyScheduler(AbstractGreedyScheduler):
         for t in self._get_t_ordering(job_pool):
             self._close_time_slot(t, job_pool.jobs, graph)
 
-            flow_value, _ = maximum_flow(graph, 0, 1 + len(job_pool.jobs) + max_t, flow_func=self.flow_method)
+            flow_value, _ = maximum_flow(graph, 0, 1 + len(job_pool.jobs) + max_t, flow_func=self.flow_func)  # noqa
 
             if flow_value < duration_sum:
                 self._open_time_slot(t, job_pool.jobs, graph)
                 active_timestamps.add(t)
 
-        _, flow_dict = maximum_flow(graph, 0, 1 + len(job_pool.jobs) + max_t, flow_func=self.flow_method)
+        _, flow_dict = maximum_flow(graph, 0, 1 + len(job_pool.jobs) + max_t, flow_func=self.flow_func)  # noqa
 
         self._apply_optimizations(job_pool, graph, active_timestamps, max_concurrency)
 
@@ -177,7 +188,7 @@ class GreedyLocalSearchScheduler(GreedyScheduler):
                     active_timestamps.add(t)
                     self._open_time_slot(t, job_pool.jobs, graph)
 
-                flow_value, _ = maximum_flow(graph, 0, 1 + len(job_pool.jobs) + max_t, flow_func=self.flow_method)
+                flow_value, _ = maximum_flow(graph, 0, 1 + len(job_pool.jobs) + max_t, flow_func=self.flow_func)  # noqa
 
                 if flow_value == duration_sum:
                     return True
@@ -326,7 +337,9 @@ class GreedyIntervalsScheduler(AbstractGreedyScheduler):
         for i, interval in enumerate(intervals):
             self._extend_interval(job_pool.jobs, i, intervals, graph, max_concurrency, interval.duration)
 
-        flow_value, _ = maximum_flow(graph, 0, 1 + len(job_pool.jobs) + len(intervals), flow_func=self.flow_method)
+        flow_value, _ = maximum_flow(
+            graph, 0, 1 + len(job_pool.jobs) + len(intervals), flow_func=self.flow_func  # noqa
+        )
 
         if flow_value < duration_sum:
             return Schedule(False, None, None)
@@ -342,7 +355,7 @@ class GreedyIntervalsScheduler(AbstractGreedyScheduler):
                 self._reduce_interval(job_pool.jobs, i, intervals, graph, max_concurrency, middle)
 
                 flow_value, _ = maximum_flow(
-                    graph, 0, 1 + len(job_pool.jobs) + len(intervals), flow_func=self.flow_method
+                    graph, 0, 1 + len(job_pool.jobs) + len(intervals), flow_func=self.flow_func  # noqa
                 )
 
                 if flow_value == duration_sum:
@@ -357,7 +370,7 @@ class GreedyIntervalsScheduler(AbstractGreedyScheduler):
             if left != intervals[i].duration:
                 active_intervals.append(TimeInterval(intervals[i].start, intervals[i].end - left))
 
-        _, flow_dict = maximum_flow(graph, 0, 1 + len(job_pool.jobs) + len(intervals), flow_func=self.flow_method)
+        _, flow_dict = maximum_flow(graph, 0, 1 + len(job_pool.jobs) + len(intervals), flow_func=self.flow_func)  # noqa
 
         return Schedule(
             True,

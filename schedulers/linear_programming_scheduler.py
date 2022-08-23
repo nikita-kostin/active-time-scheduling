@@ -25,8 +25,8 @@ class LinearProgrammingScheduler(AbstractScheduler):
 
     EPS = 1e-7
 
-    def __init__(self, method: LinearProgrammingMethod = LinearProgrammingMethod.highs) -> None:
-        self.method = method
+    def __init__(self, lp_method: LinearProgrammingMethod = LinearProgrammingMethod.highs) -> None:
+        self.lp_method = lp_method
 
     @staticmethod
     def _create_linear_program(
@@ -115,7 +115,7 @@ class LinearProgrammingScheduler(AbstractScheduler):
 
         c, A_ub, b_ub = self._create_linear_program(max_concurrency, job_pool.jobs, var_counter, t_to_var, js_to_var)
 
-        result = linprog(c, A_ub=A_ub, b_ub=b_ub, method=self.method)
+        result = linprog(c, A_ub=A_ub, b_ub=b_ub, method=self.lp_method)
 
         if result.status != 0:
             return Schedule(False, None, None)
@@ -130,10 +130,18 @@ class LinearProgrammingScheduler(AbstractScheduler):
         )
 
 
-class LinearProgrammingRoundedScheduler(LinearProgrammingScheduler, GreedyScheduler):
+class LinearProgrammingRoundedScheduler(GreedyScheduler):
+
+    def __init__(
+            self,
+            lp_method: LinearProgrammingMethod = LinearProgrammingMethod.highs,
+            flow_method: FlowMethod = FlowMethod.preflow_push,
+    ) -> None:
+        super(LinearProgrammingRoundedScheduler, self).__init__(flow_method)
+        self.linear_programming_scheduler = LinearProgrammingScheduler(lp_method)
 
     def process(self, job_pool: JobPool, max_concurrency: int) -> Schedule:
-        schedule = super(LinearProgrammingRoundedScheduler, self).process(job_pool, max_concurrency)
+        schedule = self.linear_programming_scheduler.process(job_pool, max_concurrency)
 
         if schedule.all_jobs_scheduled is False:
             return Schedule(False, None, None)
@@ -163,7 +171,7 @@ class LinearProgrammingRoundedScheduler(LinearProgrammingScheduler, GreedySchedu
             if t in active_timestamps:
                 self._open_time_slot(t, job_pool.jobs, graph)
 
-        _, flow_dict = maximum_flow(graph, 0, 1 + len(job_pool.jobs) + max_t, flow_func=FlowMethod.preflow_push)
+        _, flow_dict = maximum_flow(graph, 0, 1 + len(job_pool.jobs) + max_t, flow_func=self.flow_func)  # noqa
 
         return Schedule(
             True,
