@@ -66,7 +66,7 @@ def save_image_from_schedule(
         output_images_path: str,
 ) -> None:
     _create_image_in_plt(max_concurrency, job_pool, schedule)
-    return plt.savefig(output_images_path)
+    return plt.savefig(output_images_path, bbox_inches='tight')
 
 
 def show_image_from_schedule(
