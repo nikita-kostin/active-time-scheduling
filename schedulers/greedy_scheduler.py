@@ -215,7 +215,7 @@ class GreedyLocalSearchScheduler(GreedyScheduler):
             any_improvements = self._try_close_open(job_pool, graph, active_timestamps, max_concurrency)
 
 
-class GreedyDensityFirstScheduler(GreedyScheduler):
+class GreedyLowestDensityFirstScheduler(GreedyScheduler):
 
     @staticmethod
     def _get_t_ordering(job_pool: JobPool) -> List[int]:

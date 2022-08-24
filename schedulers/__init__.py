@@ -4,7 +4,7 @@ from .batch_scheduler import BatchScheduler
 from .greedy_scheduler import (
     AbstractGreedyScheduler,
     FlowMethod,
-    GreedyDensityFirstScheduler,
+    GreedyLowestDensityFirstScheduler,
     GreedyIntervalsScheduler,
     GreedyScheduler,
     MinFeasScheduler,
@@ -24,7 +24,7 @@ __all__ = [
     'BatchScheduler',
     'BruteForceScheduler',
     'FlowMethod',
-    'GreedyDensityFirstScheduler',
+    'GreedyLowestDensityFirstScheduler',
     'GreedyIntervalsScheduler',
     'GreedyScheduler',
     'LazyActivationScheduler',
