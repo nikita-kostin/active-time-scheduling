@@ -115,6 +115,9 @@ class LinearProgrammingScheduler(AbstractScheduler):
 
         c, A_ub, b_ub = self._create_linear_program(max_concurrency, job_pool.jobs, var_counter, t_to_var, js_to_var)
 
+        if len(c) == 0:
+            return Schedule(True, [], [])
+
         result = linprog(c, A_ub=A_ub, b_ub=b_ub, method=self.lp_method)
 
         if result.status != 0:
