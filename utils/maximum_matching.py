@@ -6,6 +6,9 @@ from queue import Queue
 
 
 class EdmondsBlossomMatching(object):
+    """
+    Based on C++ implementation available at https://e-maxx.ru/algo/matching_edmonds.
+    """
 
     @staticmethod
     def _mark_path(
