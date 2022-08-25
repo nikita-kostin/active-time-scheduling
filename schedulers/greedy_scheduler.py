@@ -111,7 +111,7 @@ class GreedyScheduler(AbstractGreedyScheduler):
     def _get_t_ordering(job_pool: JobPool) -> List[int]:
         min_t = min([job.release_time for job in job_pool.jobs])
         max_t = max([job.deadline for job in job_pool.jobs]) + 1
-        return list(range(min_t, max_t + 1))
+        return list(range(min_t, max_t))
 
     def _apply_optimizations(
             self,
