@@ -107,8 +107,7 @@ class GreedyScheduler(AbstractGreedyScheduler):
 
             yield JobScheduleMI(job, TimeInterval.merge_timestamps(job_active_timestamps))
 
-    @staticmethod
-    def _get_t_ordering(job_pool: JobPool) -> List[int]:
+    def _get_t_ordering(self, job_pool: JobPool) -> List[int]:
         min_t = min([job.release_time for job in job_pool.jobs])
         max_t = max([job.deadline for job in job_pool.jobs]) + 1
         return list(range(min_t, max_t))
@@ -217,13 +216,17 @@ class GreedyLocalSearchScheduler(GreedyScheduler):
 
 class GreedyLowestDensityFirstScheduler(GreedyScheduler):
 
-    @staticmethod
-    def _get_t_ordering(job_pool: JobPool) -> List[int]:
+    def __init__(self, flow_method: FlowMethod = FlowMethod.PREFLOW_PUSH, x: int = 0) -> None:
+        super(GreedyLowestDensityFirstScheduler, self).__init__(flow_method)
+        self.x = x
+
+    def _get_t_ordering(self, job_pool: JobPool) -> List[int]:
         frequency = {}
         for job in job_pool.jobs:
             for t in range(job.release_time, job.deadline + 1):
+                relative_slack = job.duration / (job.deadline - job.release_time + 1)
                 frequency.setdefault(t, 0)
-                frequency[t] += 1
+                frequency[t] += 1 * (relative_slack ** self.x)
 
         t_ordering = sorted((item[1], item[0]) for item in frequency.items())
 
@@ -381,8 +384,7 @@ class GreedyIntervalsScheduler(AbstractGreedyScheduler):
 
 class MinFeasScheduler(GreedyScheduler):
 
-    @staticmethod
-    def _get_t_ordering(job_pool: JobPool) -> List[int]:
-        t_ordering = GreedyScheduler._get_t_ordering(job_pool)
+    def _get_t_ordering(self, job_pool: JobPool) -> List[int]:
+        t_ordering = self._get_t_ordering(job_pool)
         shuffle(t_ordering)
         return t_ordering
