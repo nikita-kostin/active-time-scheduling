@@ -8,8 +8,7 @@ from scipy.optimize import OptimizeResult, OptimizeWarning, linprog
 from typing import Dict, Iterable, List, Tuple, Union
 
 from models import JobMI, JobPool, JobPoolMI, JobScheduleMI, Schedule, TimeInterval
-from schedulers import AbstractScheduler, GreedyScheduler
-from schedulers.greedy_scheduler import FlowMethod
+from schedulers import AbstractScheduler, FlowMethod, GreedyScheduler
 
 
 class LinearProgrammingMethod(str, Enum):
