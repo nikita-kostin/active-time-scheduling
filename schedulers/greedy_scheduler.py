@@ -12,7 +12,7 @@ from networkx.algorithms.flow import (
     boykov_kolmogorov,
 )
 from random import shuffle
-from typing import Callable, Dict, Iterable, List, Set
+from typing import Callable, Dict, Iterable, List, Optional, Set
 
 from models import Job, JobMI, JobPool, JobScheduleMI, Schedule, TimeInterval
 from schedulers import AbstractScheduler
@@ -216,17 +216,26 @@ class GreedyLocalSearchScheduler(GreedyScheduler):
 
 class GreedyLowestDensityFirstScheduler(GreedyScheduler):
 
-    def __init__(self, flow_method: FlowMethod = FlowMethod.PREFLOW_PUSH, x: int = 0) -> None:
+    def __init__(
+            self,
+            flow_method: FlowMethod = FlowMethod.PREFLOW_PUSH,
+            f: Optional[Callable[[float], float]] = None,
+    ) -> None:
         super(GreedyLowestDensityFirstScheduler, self).__init__(flow_method)
-        self.x = x
+        self.f = f
+
+    def _get_weight(self, job: Job) -> float:
+        if self.f is None:
+            return 1
+        relative_slack = job.duration / (job.deadline - job.release_time + 1)
+        return self.f(relative_slack)
 
     def _get_t_ordering(self, job_pool: JobPool) -> List[int]:
         frequency = {}
         for job in job_pool.jobs:
             for t in range(job.release_time, job.deadline + 1):
-                relative_slack = job.duration / (job.deadline - job.release_time + 1)
                 frequency.setdefault(t, 0)
-                frequency[t] += 1 * (relative_slack ** self.x)
+                frequency[t] += self._get_weight(job)
 
         t_ordering = sorted((item[1], item[0]) for item in frequency.items())
 
