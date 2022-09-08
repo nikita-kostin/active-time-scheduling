@@ -5,9 +5,9 @@ from random import randint
 from models import JobPool
 from schedulers import (
     BruteForceScheduler,
+    DegreeConstrainedSubgraphScheduler,
     LazyActivationSchedulerT,
     LinearProgrammingRoundedScheduler,
-    UpperDegreeConstrainedSubgraphScheduler,
 )
 from tests.schedulers.common import check_2_approximation, generate_jobs_uniform_distribution
 
@@ -69,7 +69,7 @@ class TestLinearProgrammingScheduler(object):
 
         job_pool = generate_jobs_uniform_distribution(number_of_jobs, max_t, (1, max_length), (1, max_length))
 
-        schedule_a = UpperDegreeConstrainedSubgraphScheduler().process(job_pool)
+        schedule_a = DegreeConstrainedSubgraphScheduler().process(job_pool)
         schedule_b = LinearProgrammingRoundedScheduler().process(job_pool, 2)
 
         check_2_approximation(schedule_a, schedule_b, job_pool, 2)

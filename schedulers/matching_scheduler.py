@@ -73,7 +73,7 @@ class MatchingScheduler(AbstractScheduler):
         )
 
 
-class UpperDegreeConstrainedSubgraphScheduler(AbstractScheduler):
+class DegreeConstrainedSubgraphScheduler(AbstractScheduler):
 
     @staticmethod
     def _create_job_schedules_for_job(

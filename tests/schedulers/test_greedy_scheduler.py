@@ -7,10 +7,10 @@ from models import JobPool, TimeInterval
 from schedulers import (
     AbstractGreedyScheduler,
     BruteForceScheduler,
+    DegreeConstrainedSubgraphScheduler,
     GreedyIntervalsScheduler,
     GreedyScheduler,
     LazyActivationSchedulerT,
-    UpperDegreeConstrainedSubgraphScheduler,
 )
 from tests.schedulers.common import check_equality, check_2_approximation, generate_jobs_uniform_distribution
 
@@ -116,7 +116,7 @@ class TestGreedyScheduler(object):
 
         job_pool = generate_jobs_uniform_distribution(number_of_jobs, max_t, (1, max_length), (1, max_length))
 
-        schedule_a = UpperDegreeConstrainedSubgraphScheduler().process(job_pool)
+        schedule_a = DegreeConstrainedSubgraphScheduler().process(job_pool)
         schedule_b = scheduler_b().process(job_pool, 2)
 
         check_2_approximation(schedule_a, schedule_b, job_pool, 2)

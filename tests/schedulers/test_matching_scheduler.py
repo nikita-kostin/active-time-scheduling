@@ -5,9 +5,9 @@ from random import randint, random
 from models import JobPoolMI, TimeInterval, UnitJobPoolMI
 from schedulers import (
     BruteForceScheduler,
+    DegreeConstrainedSubgraphScheduler,
     LazyActivationSchedulerT,
     MatchingScheduler,
-    UpperDegreeConstrainedSubgraphScheduler,
 )
 from tests.schedulers.common import check_equality, generate_jobs_uniform_distribution, generate_mi_jobs
 
@@ -48,7 +48,7 @@ class TestMatchingScheduler(object):
         job_pool.add_job([(1, 2), (4, 5)], 2)
         job_pool.add_job([(1, 2), (4, 5)], 2)
 
-        schedule = UpperDegreeConstrainedSubgraphScheduler().process(job_pool)
+        schedule = DegreeConstrainedSubgraphScheduler().process(job_pool)
 
         assert schedule.all_jobs_scheduled is True
         assert schedule.active_time_intervals == [
@@ -62,7 +62,7 @@ class TestMatchingScheduler(object):
         job_pool.add_job([(1, 2)], 2)
         job_pool.add_job([(1, 2)], 2)
 
-        schedule = UpperDegreeConstrainedSubgraphScheduler().process(job_pool)
+        schedule = DegreeConstrainedSubgraphScheduler().process(job_pool)
 
         assert schedule.all_jobs_scheduled is False
         assert schedule.active_time_intervals is None
@@ -89,7 +89,7 @@ class TestMatchingScheduler(object):
     def test_udcs_empty(self) -> None:
         job_pool = JobPoolMI()
 
-        schedule = UpperDegreeConstrainedSubgraphScheduler().process(job_pool)
+        schedule = DegreeConstrainedSubgraphScheduler().process(job_pool)
 
         assert schedule.all_jobs_scheduled is True
         assert schedule.active_time_intervals == []
@@ -99,7 +99,7 @@ class TestMatchingScheduler(object):
         job_pool.add_job([(1, 2)], 0)
         job_pool.add_job([(4, 5)], 0)
 
-        schedule = UpperDegreeConstrainedSubgraphScheduler().process(job_pool)
+        schedule = DegreeConstrainedSubgraphScheduler().process(job_pool)
 
         assert schedule.all_jobs_scheduled is True
         assert schedule.active_time_intervals == []
@@ -128,7 +128,7 @@ class TestMatchingScheduler(object):
         job_pool = generate_mi_jobs(number_of_jobs, max_t, (0, max_p), max_length)
 
         schedule_a = BruteForceScheduler().process(job_pool, 2)
-        schedule_b = UpperDegreeConstrainedSubgraphScheduler().process(job_pool)
+        schedule_b = DegreeConstrainedSubgraphScheduler().process(job_pool)
 
         check_equality(schedule_a, schedule_b, job_pool, 2)
 

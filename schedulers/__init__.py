@@ -16,13 +16,14 @@ from .linear_programming_scheduler import (
     LinearProgrammingScheduler,
     LinearProgrammingRoundedScheduler,
 )
-from .matching_scheduler import MatchingScheduler, UpperDegreeConstrainedSubgraphScheduler
+from .matching_scheduler import DegreeConstrainedSubgraphScheduler, MatchingScheduler
 
 __all__ = [
     'AbstractGreedyScheduler',
     'AbstractScheduler',
     'BatchScheduler',
     'BruteForceScheduler',
+    'DegreeConstrainedSubgraphScheduler',
     'FlowMethod',
     'GreedyLowestDensityFirstScheduler',
     'GreedyIntervalsScheduler',
@@ -35,5 +36,4 @@ __all__ = [
     'LinearProgrammingRoundedScheduler',
     'MatchingScheduler',
     'MinFeasScheduler',
-    'UpperDegreeConstrainedSubgraphScheduler',
 ]
