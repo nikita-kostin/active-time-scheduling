@@ -195,25 +195,6 @@ class Job(JobMI):
         return hash((self.release_time, self.deadline, self.id))
 
 
-class UnitJob(Job):
-    """
-    Job with unit length (duration) and a single execution window.
-    """
-
-    def __init__(self, release_time: int, deadline: int) -> None:
-        """
-        Initialize the class with parameters.
-        :param release_time: Release time of the job.
-        :param deadline: Deadline of the job.
-        """
-        super(UnitJob, self).__init__(release_time, deadline, 1)
-
-    def __str__(self) -> str:
-        return "UnitJob(release_time={0}, deadline={1})".format(self.release_time, self.deadline)
-
-    __repr__ = __str__
-
-
 class BatchJob(AbstractJob):
     """
     Represents a job that is to be scheduled in a batch.
