@@ -38,7 +38,7 @@ job_pool.add_job(release_time=5, deadline=8, duration=2)
 
 To process the job pool, the subclasses of `AbstractScheduler` from the package `schedulers` are used. To perform the
 processing, the job pool should be passed into the `process` function. The result of the function is the computed job
-schedule, which, if the problem instane is feasible, contains the information regarding the active time slots as well as
+schedule, which, if the problem instance is feasible, contains the information regarding the active time slots as well as
 individual schedules:
 
 ```python
