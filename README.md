@@ -42,10 +42,7 @@ schedule, which, if the problem instane is feasible, contains the information re
 individual schedules:
 
 ```python
-from schedulers import (
-    FlowMethod,
-    GreedyScheduler,
-)
+from schedulers import FlowMethod, GreedyScheduler
 
 scheduler = GreedyScheduler(FlowMethod.PREFLOW_PUSH)
 schedule = scheduler.process(job_pool, max_concurrency=2)
