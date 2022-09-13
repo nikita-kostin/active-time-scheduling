@@ -7,8 +7,16 @@ from typing import Iterator, List, Optional, Set
 
 @total_ordering
 class TimeInterval(object):
+    """
+    An entity that represents a time interval of the form [start, end].
+    """
 
     def __init__(self, start: int, end: int) -> None:
+        """
+        Initialize the class with parameters.
+        :param start: Start of the time interval.
+        :param end: End of the time interval.
+        """
         self.start = start
         self.end = end
 
@@ -32,6 +40,11 @@ class TimeInterval(object):
 
     @staticmethod
     def merge_timestamps(timestamps: Set[int]) -> List['TimeInterval']:
+        """
+        Merges single timestamps into a list of ordered disjoint time intervals.
+        :param timestamps: Timestamps to merge.
+        :return: Merged time intervals.
+        """
         if len(timestamps) == 0:
             return []
 
@@ -56,6 +69,11 @@ class TimeInterval(object):
 
     @staticmethod
     def merge_time_intervals(time_intervals: List['TimeInterval']) -> List['TimeInterval']:
+        """
+        Merges time intervals into a list of ordered disjoint time intervals that cover the same time units.
+        :param time_intervals: Time intervals to merge.
+        :return: Merged time intervals.
+        """
         time_intervals = sorted(time_intervals)
         merged_time_intervals = []
 
@@ -82,9 +100,17 @@ class TimeInterval(object):
 
 
 class AbstractJob(ABC):
+    """
+    An abstract class representing a single job.
+    """
     _id_iter = count()
 
     def __init__(self, availability_intervals: List[TimeInterval], duration: Optional[int]) -> None:
+        """
+        Initialize the class with parameters.
+        :param availability_intervals: execution intervals of the job.
+        :param duration: Duration of the job.
+        """
         self.id = next(self.__class__._id_iter)
         self.availability_intervals = availability_intervals
         self.duration = duration
@@ -98,8 +124,16 @@ class AbstractJob(ABC):
 
 
 class JobMI(AbstractJob):
+    """
+    Job with multiple execution windows. MI stands for multiple intervals.
+    """
 
     def __init__(self, availability_intervals: List[TimeInterval], duration: int) -> None:
+        """
+        Initialize the class with parameters.
+        :param availability_intervals: Execution windows of the job.
+        :param duration: Duration of the job.
+        """
         super(JobMI, self).__init__(availability_intervals, duration)
 
     def __str__(self) -> str:
@@ -113,8 +147,17 @@ class JobMI(AbstractJob):
 
 @total_ordering
 class Job(JobMI):
+    """
+    Job with a single execution window.
+    """
 
     def __init__(self, release_time: int, deadline: int, duration: int) -> None:
+        """
+        Initialize the class with parameters.
+        :param release_time: Release time of the job.
+        :param deadline: Deadline of the job.
+        :param duration: Duration of the job.
+        """
         super(Job, self).__init__([TimeInterval(release_time, deadline)], duration)
 
     def __str__(self) -> str:
@@ -153,8 +196,16 @@ class Job(JobMI):
 
 
 class UnitJob(Job):
+    """
+    Job with unit length (duration) and a single execution window.
+    """
 
     def __init__(self, release_time: int, deadline: int) -> None:
+        """
+        Initialize the class with parameters.
+        :param release_time: Release time of the job.
+        :param deadline: Deadline of the job.
+        """
         super(UnitJob, self).__init__(release_time, deadline, 1)
 
     def __str__(self) -> str:
@@ -164,8 +215,16 @@ class UnitJob(Job):
 
 
 class BatchJob(AbstractJob):
+    """
+    Represents a job that is to be scheduled in a batch.
+    """
 
     def __init__(self, release_time: int, deadline: int) -> None:
+        """
+        Initialize the class with parameters.
+        :param release_time: Release time of the job.
+        :param deadline: Deadline of the job.
+        """
         super(BatchJob, self).__init__([TimeInterval(release_time, deadline)], None)
 
     def __str__(self) -> str:

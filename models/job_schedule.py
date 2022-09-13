@@ -6,8 +6,16 @@ from models import AbstractJob, BatchJob, TimeInterval
 
 
 class AbstractJobSchedule(object):
+    """
+    An abstract entity representing the resulting job schedule.
+    """
 
     def __init__(self, job: AbstractJob, execution_intervals: List[TimeInterval]) -> None:
+        """
+        Initialize the class with parameters.
+        :param job: Job that the schedule was created for.
+        :param execution_intervals: Scheduled time of the job.
+        """
         self.job = job
         self.execution_intervals = execution_intervals
 
@@ -17,6 +25,9 @@ class AbstractJobSchedule(object):
 
 
 class JobScheduleMI(AbstractJobSchedule):
+    """
+    Job schedule that might have more than one execution window. MI stands for multiple intervals.
+    """
 
     def __str__(self) -> str:
         return "JobScheduleMI(job={0}, execution_intervals={1})".format(
@@ -29,6 +40,9 @@ class JobScheduleMI(AbstractJobSchedule):
 
 @total_ordering
 class JobSchedule(JobScheduleMI):
+    """
+    Job schedule with a single execution window.
+    """
 
     def __init__(
             self,
@@ -36,6 +50,12 @@ class JobSchedule(JobScheduleMI):
             execution_start: int,
             execution_end: int,
     ) -> None:
+        """
+        Initialize the class with parameters.
+        :param job: Job that the schedule was created for.
+        :param execution_start: Start of the execution window.
+        :param execution_end: End of the execution window.
+        """
         super(JobSchedule, self).__init__(job, [TimeInterval(execution_start, execution_end)])
 
     @property
@@ -75,8 +95,17 @@ class JobSchedule(JobScheduleMI):
 
 @total_ordering
 class BatchJobSchedule(object):
+    """
+    Schedule of a single batch.
+    """
 
     def __init__(self, jobs: Set[BatchJob], execution_start: int, execution_end: int) -> None:
+        """
+        Initialize the class with parameters.
+        :param jobs: Jobs in the batch.
+        :param execution_start: Start of the execution window for the batch.
+        :param execution_end: End of the execution window for the batch.
+        """
         self.jobs = jobs
         self.execution_start = execution_start
         self.execution_end = execution_end
