@@ -44,7 +44,8 @@ class MatchingScheduler(AbstractScheduler):
     @classmethod
     def process(cls, job_pool: Union[UnitJobPoolMI, UnitJobPool]) -> Schedule:
         """
-        Given a set of jobs, computes an optimal solution.
+        Given a set of jobs, computes an optimal solution. The maximum concurrency number B is fixed at 2 as due to the
+        algorithm.
         :param job_pool: Job pool of jobs with unit length and arbitrary number of execution intervals.
         :return: Computed schedule.
         """
@@ -113,7 +114,8 @@ class DegreeConstrainedSubgraphScheduler(AbstractScheduler):
     @classmethod
     def process(cls, job_pool: Union[JobPoolMI, JobPool]) -> Schedule:
         """
-        Given a set of jobs, computes an optimal solution.
+        Given a set of jobs, computes an optimal solution. The maximum concurrency number B is fixed at 2 as due to the
+        algorithm.
         :param job_pool: Job pool of jobs with unit length and arbitrary number of execution intervals.
         :return: Computed schedule.
         """
