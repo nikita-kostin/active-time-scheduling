@@ -7,7 +7,9 @@ from queue import Queue
 
 class EdmondsBlossomMatching(object):
     """
-    Based on C++ implementation available at https://e-maxx.ru/algo/matching_edmonds.
+    The implementation of the Edmonds' Blossom Algorithm for finding maximum matching on arbitrary graphs that is based
+    on C++ implementation available at https://e-maxx.ru/algo/matching_edmonds. The running complexity of this
+    particular implementation is O(V^3).
     """
 
     @staticmethod
@@ -93,6 +95,12 @@ class EdmondsBlossomMatching(object):
 
     @staticmethod
     def process(g: Graph, initial_matching: Optional[Dict[Any, Any]] = None) -> Dict[Any, Any]:
+        """
+        Computes the maximum matching.
+        :param g: The input graph.
+        :param initial_matching: Initial matching to extend, considered empty if none is provided.
+        :return: Computed matching.
+        """
         matching = {} if initial_matching is None else deepcopy(initial_matching)
 
         for u in g.nodes:
@@ -110,9 +118,19 @@ class EdmondsBlossomMatching(object):
 
 
 class UpperDegreeConstrainedSubgraph(object):
+    """
+    An algorithm for solving the upper degree constrained subgraph problem based on "Another look at the degree
+    constrained subgraph problem" (Shiloach, 1981) that reduces the problem to ordinary matchings on general graphs.
+    """
 
     @staticmethod
     def construct_h(g: Graph, constraints: Dict[int, int]) -> Graph:
+        """
+        Construct helper graph.
+        :param g: Original graph.
+        :param constraints: Degree constrains.
+        :return: Resulting helper graph.
+        """
         h = Graph()
 
         for u in g.nodes:
@@ -135,6 +153,12 @@ class UpperDegreeConstrainedSubgraph(object):
 
     @staticmethod
     def construct_dcs(g: Graph, matching: Dict[Any, Any]) -> Dict[Any, Set[Any]]:
+        """
+        Construct the DCS solution from matching.
+        :param g: Corresponding graph.
+        :param matching: Matching solution.
+        :return: DCS solution.
+        """
         degree_constrained_subgraph = {}
         for u in g.nodes:
             degree_constrained_subgraph[u] = set()
@@ -142,7 +166,10 @@ class UpperDegreeConstrainedSubgraph(object):
         for i, e in enumerate(g.edges):
             u, v = e
 
-            if matching.get("u_{%s, %s}" % (u, v), '').startswith("v_") and matching.get("w_{%s, %s}" % (u, v), '').startswith("v_"):
+            if (
+                    matching.get("u_{%s, %s}" % (u, v), '').startswith("v_") and
+                    matching.get("w_{%s, %s}" % (u, v), '').startswith("v_")
+            ):
                 degree_constrained_subgraph[u].add(v)
                 degree_constrained_subgraph[v].add(u)
 
@@ -150,6 +177,12 @@ class UpperDegreeConstrainedSubgraph(object):
 
     @staticmethod
     def process(g: Graph, constraints: Dict[int, int]) -> Dict[Any, Set[Any]]:
+        """
+        Process the input using Edmonds' Blossom Algorithm.
+        :param g: Graph to process.
+        :param constraints: Degree constraints.
+        :return: Resulting solution.
+        """
         h = Graph()
 
         for u in g.nodes:

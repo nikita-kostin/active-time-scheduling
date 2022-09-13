@@ -65,6 +65,14 @@ def save_image_from_schedule(
         schedule: Schedule,
         output_images_path: str,
 ) -> None:
+    """
+    Creates a visualization of the schedule using boxplots from the matplotlib package and saves it under a given path.
+    :param max_concurrency: Maximum number of jobs allowed to run concurrently.
+    :param job_pool: Processed job pool.
+    :param schedule: Resulting schedule.
+    :param output_images_path: Path to save the resulting image to.
+    :return: None
+    """
     _create_image_in_plt(max_concurrency, job_pool, schedule)
     return plt.savefig(output_images_path, bbox_inches='tight')
 
@@ -74,5 +82,12 @@ def show_image_from_schedule(
         job_pool: AbstractJobPool,
         schedule: Schedule,
 ) -> None:
+    """
+    Creates a visualization of the schedule using boxplots from the matplotlib package and shows it using plt.show().
+    :param max_concurrency: Maximum number of jobs allowed to run concurrently.
+    :param job_pool: Processed job pool.
+    :param schedule: Resulting schedule.
+    :return: None
+    """
     _create_image_in_plt(max_concurrency, job_pool, schedule)
     return plt.show()
