@@ -20,6 +20,10 @@ from utils import ford_fulkerson
 
 
 class FlowMethod(str, Enum):
+    """
+    Enum representing the method to compute the feasibility flow.
+    """
+
     EDMONDS_KARP = 'edmonds_karp'
     SHORTEST_AUGMENTING_PATH = 'shortest_augmenting_path'
     PREFLOW_PUSH = 'preflow_push'
@@ -29,8 +33,16 @@ class FlowMethod(str, Enum):
 
 
 class AbstractGreedyScheduler(AbstractScheduler, ABC):
+    """
+    Abstract class for any other greedy scheduler. Defines the constructor, the flow_func property as well as the
+    signature of the process function.
+    """
 
     def __init__(self, flow_method: FlowMethod = FlowMethod.PREFLOW_PUSH) -> None:
+        """
+        Initialize the class with parameters.
+        :param flow_method: Flow method used to solve the feasibility problem.
+        """
         self.flow_method = flow_method
 
     @property
@@ -46,10 +58,22 @@ class AbstractGreedyScheduler(AbstractScheduler, ABC):
 
     @abstractmethod
     def process(self, job_pool: JobPool, max_concurrency: int) -> Schedule:
+        """
+        Abstract method to compute the schedule using a greedy flow algorithm.
+        :param job_pool: Job pool with jobs having a single execution interval.
+        :param max_concurrency: Maximum number of jobs allowed to run concurrently.
+        :return: Computed schedule.
+        """
         pass
 
 
 class GreedyScheduler(AbstractGreedyScheduler):
+    """
+    Greedy flow algorithm based on "Brief announcement: A greedy 2 approximation for the active time problem" (Kumar et
+    al., 2018). The algorithm computes a 2-approximation solution to a set of jobs with arbitrary lengths but single
+    execution interval. The running complexity depends on the selected algorithm used for the maximum flow problem:
+    O(T) flow computations on a network with O(n + T) nodes and O(nT) edges are required to compute the solution.
+    """
 
     @staticmethod
     def _create_initial_graph(
@@ -122,6 +146,12 @@ class GreedyScheduler(AbstractGreedyScheduler):
         return
 
     def process(self, job_pool: JobPool, max_concurrency: int) -> Schedule:
+        """
+        Computes a 2-approximation schedule given a set of jobs and maximum concurrency.
+        :param job_pool: Job pool of jobs with a single execution interval.
+        :param max_concurrency: Maximum number of jobs allowed to run concurrently.
+        :return: Computed schedule.
+        """
         if job_pool.size == 0:
             return Schedule(True, [], [])
 
@@ -161,6 +191,10 @@ class GreedyScheduler(AbstractGreedyScheduler):
 
 
 class GreedyLocalSearchScheduler(GreedyScheduler):
+    """
+    The algorithm applies local optimizations to the resulting schedule as described in "Brief announcement: A greedy 2
+    approximation for the active time problem" (Kumar et al., 2018).
+    """
 
     def _try_close_open(
             self,
@@ -215,6 +249,12 @@ class GreedyLocalSearchScheduler(GreedyScheduler):
 
 
 class GreedyLowestDensityFirstScheduler(GreedyScheduler):
+    """
+    This algorithm tries to close the time slot in a different manner, preferring denser time slots to the sparser ones.
+    The density of a time slot is defined as the number of jobs available at it. If the weight function is not passed to
+    the constructor, the method only provides a 3-approximation to the Active Time Problem. However, even in this case
+    it performs noticeably better on random data.
+    """
 
     def __init__(
             self,
@@ -243,6 +283,11 @@ class GreedyLowestDensityFirstScheduler(GreedyScheduler):
 
 
 class GreedyIntervalsScheduler(AbstractGreedyScheduler):
+    """
+    This algorithm computes a 2-approximation solution for jobs with arbitrary lengths and single execution intervals.
+    In comparison to GreedyScheduler, this algorithm requires O(nlogT) flow computations on a feasibility network with
+    O(n) nodes and O(n^2) edges, which provides a performance boost for the case when T is significantly bigger than n.
+    """
 
     @staticmethod
     def _create_initial_graph(
@@ -331,6 +376,12 @@ class GreedyIntervalsScheduler(AbstractGreedyScheduler):
             yield JobScheduleMI(job, TimeInterval.merge_time_intervals(active_intervals))
 
     def process(self, job_pool: JobPool, max_concurrency: int) -> Schedule:
+        """
+        Computes a 2-approximation schedule given a set of jobs and maximum concurrency.
+        :param job_pool: Job pool of jobs with a single execution interval.
+        :param max_concurrency: Maximum number of jobs allowed to run concurrently.
+        :return: Computed schedule.
+        """
         if job_pool.size == 0:
             return Schedule(True, [], [])
 
@@ -392,6 +443,11 @@ class GreedyIntervalsScheduler(AbstractGreedyScheduler):
 
 
 class MinFeasScheduler(GreedyScheduler):
+    """
+    This algorithm was presented in "LP rounding and combinatorial algorithms for minimizing active and busy time"
+    (Chang et al., 2017). It provides a 3-approximation to the Active Time Problem by trying to close the time slots in
+    an arbitrary order.
+    """
 
     def _get_t_ordering(self, job_pool: JobPool) -> List[int]:
         t_ordering = self._get_t_ordering(job_pool)

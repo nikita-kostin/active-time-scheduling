@@ -7,6 +7,12 @@ from schedulers import AbstractScheduler
 
 
 class BatchScheduler(AbstractScheduler):
+    """
+    Batch scheduling algorithm as it is described in "Optimal Batch Schedules for Parallel Machines" (Koehler and
+    Khuller, 2013). The version represented in this class is for the case when jobs are not restricted to be agreeable
+    and works for the number of machines m = 1, which corresponds to the Active Time Problem. The algorithm runs in
+    O(n^3).
+    """
 
     @staticmethod
     def _construct_initial_schedule(
@@ -118,6 +124,12 @@ class BatchScheduler(AbstractScheduler):
         return [batch for batch in batches if len(batch.jobs) != 0]
 
     def process(self, job_pool: FixedLengthJobPool, max_concurrency: int) -> Schedule:
+        """
+        Compute the optimal batch schedule for a given set of jobs and maximum concurrency.
+        :param job_pool: Job pool of fixed length jobs.
+        :param max_concurrency: Maximum number of jobs allowed to run concurrently.
+        :return: Computed batch schedule.
+        """
         if job_pool.size == 0:
             return Schedule(True, [], [])
 

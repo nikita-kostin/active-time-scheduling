@@ -7,6 +7,11 @@ from schedulers import GreedyScheduler
 
 
 class BruteForceScheduler(GreedyScheduler):
+    """
+    This class is used solely for testing purposes. The algorithm iterates among all possible combinations of open and
+    closed time slots and selects the feasible schedule with the least amount of active time. The feasibility is
+    confirmed using the feasibility network as described in "Energy-aware batch scheduling" (Chang, 2013).
+    """
 
     def _compute_flow(
             self,
@@ -24,6 +29,12 @@ class BruteForceScheduler(GreedyScheduler):
         return maximum_flow(graph, 0, 1 + len(jobs) + max_t, flow_func=self.flow_func)  # noqa
 
     def process(self, job_pool: Union[JobPoolMI, JobPool], max_concurrency: int) -> Schedule:
+        """
+        Computes the optimal schedule given a set of job and maximum concurrency.
+        :param job_pool: Job pool of arbitrary type jobs.
+        :param max_concurrency: Maximum number of jobs allowed to run concurrently.
+        :return: Computed schedule.
+        """
         if job_pool.size == 0:
             return Schedule(True, [], [])
 

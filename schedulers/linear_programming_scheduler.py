@@ -12,6 +12,10 @@ from schedulers import AbstractScheduler, FlowMethod, GreedyScheduler
 
 
 class LinearProgrammingMethod(str, Enum):
+    """
+    Reflects the LP method that is used for solving the LP formulated problem in the schedulers.
+    """
+
     HIGHS_DS = 'highs-ds'
     HIGHS_IPM = 'highs-ipm'
     HIGHS = 'highs'
@@ -21,10 +25,18 @@ class LinearProgrammingMethod(str, Enum):
 
 
 class LinearProgrammingScheduler(AbstractScheduler):
+    """
+    Computes an optimal solution for the Active Time Problem with preemption allowed at arbitrary time points. The LP
+    used in this scheduler was first escribed in "A model for minimizing active processor time" (Chang et al., 2012).
+    """
 
     EPS = 1e-7
 
     def __init__(self, lp_method: LinearProgrammingMethod = LinearProgrammingMethod.HIGHS) -> None:
+        """
+        Initialize the class with parameters.
+        :param lp_method: LP method used to solve the LP formulated problem.
+        """
         self.lp_method = lp_method
 
     @staticmethod
@@ -91,6 +103,12 @@ class LinearProgrammingScheduler(AbstractScheduler):
             yield job_schedule
 
     def process(self, job_pool: Union[JobPoolMI, JobPool], max_concurrency: int) -> Schedule:
+        """
+        Computes the optimal schedule given a set of job and maximum concurrency.
+        :param job_pool: Job pool of jobs with arbitrary number of intervals.
+        :param max_concurrency: Maximum number of jobs allowed to run concurrently.
+        :return: Computed schedule with preemption allowed at arbitrary points.
+        """
         if job_pool.size == 0:
             return Schedule(True, [], [])
 
@@ -133,6 +151,11 @@ class LinearProgrammingScheduler(AbstractScheduler):
 
 
 class LinearProgrammingRoundedScheduler(GreedyScheduler):
+    """
+    Converts the LP solution from LinearProgrammingScheduler to the integer case. The LP rounding scheme used in this
+    scheduler was introduced in "LP rounding and combinatorial algorithms for minimizing active and busy time" (Chang et
+    al., 2017).
+    """
 
     def __init__(
             self,
@@ -143,6 +166,12 @@ class LinearProgrammingRoundedScheduler(GreedyScheduler):
         self.linear_programming_scheduler = LinearProgrammingScheduler(lp_method)
 
     def process(self, job_pool: JobPool, max_concurrency: int) -> Schedule:
+        """
+        Computes a 2-approximation schedule given a set of jobs and maximum concurrency.
+        :param job_pool: Job pool of jobs with a single execution interval.
+        :param max_concurrency: Maximum number of jobs allowed to run concurrently.
+        :return: Computed schedule.
+        """
         schedule = self.linear_programming_scheduler.process(job_pool, max_concurrency)
 
         if schedule.all_jobs_scheduled is False:

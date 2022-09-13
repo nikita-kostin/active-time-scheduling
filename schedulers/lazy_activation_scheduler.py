@@ -9,6 +9,12 @@ from utils import DisjointSetNode
 
 
 class AbstractLazyActivationScheduler(AbstractScheduler, ABC):
+    """
+    Abstract class that defines the interface for other Lazy Activation algorithms. The Lazy Activation algorithm was
+    developed in "A model for minimizing active processor time" (Chang et al., 2012) and is performed in two phases: the
+    first phase adjusts the deadlines of the given jobs, s.t. no more than B jobs have the same deadline. The second
+    phase performs the actual scheduling.
+    """
 
     @staticmethod
     def _init_for_timestamp(t: int, t_to_count: Dict[int, int], t_to_node: Dict[int, DisjointSetNode]) -> None:
@@ -54,6 +60,12 @@ class AbstractLazyActivationScheduler(AbstractScheduler, ABC):
 
     @classmethod
     def process(cls, job_pool: UnitJobPool, max_concurrency: int) -> Schedule:
+        """
+        Computes the optimal schedule given a set of jobs and maximum concurrency.
+        :param job_pool: Job pool of jobs with unit length and a single execution interval.
+        :param max_concurrency: Maximum number of jobs allowed to run concurrently.
+        :return: Computed schedule.
+        """
         if job_pool.size == 0:
             return Schedule(True, [], [])
 
@@ -70,6 +82,9 @@ class AbstractLazyActivationScheduler(AbstractScheduler, ABC):
 
 
 class LazyActivationSchedulerNLogN(AbstractLazyActivationScheduler):
+    """
+    The version of the Lazy Activation computing the solution in O(nlogn) time.
+    """
 
     @classmethod
     def _phase_one(cls, max_concurrency: int, job_schedules: List[JobSchedule]) -> Iterable[JobSchedule]:
@@ -141,6 +156,9 @@ class LazyActivationSchedulerNLogN(AbstractLazyActivationScheduler):
 
 
 class LazyActivationSchedulerT(AbstractLazyActivationScheduler):
+    """
+    The version of the Lazy Activation Algorithm that has O(n + T) running complexity.
+    """
 
     @classmethod
     def _phase_one(cls, max_concurrency: int, job_schedules: List[JobSchedule]) -> Iterable[JobSchedule]:

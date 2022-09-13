@@ -17,6 +17,13 @@ from utils import EdmondsBlossomMatching, UpperDegreeConstrainedSubgraph
 
 
 class MatchingScheduler(AbstractScheduler):
+    """
+    This algorithm is based on the matching algorithm presented in "A model for minimizing active processor time"
+    (Chang et al., 2012). Given a set of jobs with unit lengths and arbitrary number of execution intervals, it computes
+    an optimal solution by reducing the Active Time Problem to general matchings. To compute the matching problem, a
+    O(V^3) version of Edmonds' Blossom Algorithm is used. The overall running complexity of the algorithm is therefore
+    O((n + T)^3).
+    """
 
     @staticmethod
     def _create_job_schedules_for_job(
@@ -36,6 +43,11 @@ class MatchingScheduler(AbstractScheduler):
 
     @classmethod
     def process(cls, job_pool: Union[UnitJobPoolMI, UnitJobPool]) -> Schedule:
+        """
+        Given a set of jobs, computes an optimal solution.
+        :param job_pool: Job pool of jobs with unit length and arbitrary number of execution intervals.
+        :return: Computed schedule.
+        """
         graph = Graph()
 
         for i, job in enumerate(job_pool.jobs):
@@ -74,6 +86,12 @@ class MatchingScheduler(AbstractScheduler):
 
 
 class DegreeConstrainedSubgraphScheduler(AbstractScheduler):
+    """
+    This algorithm represents the (upper) degree-constrained-subgraph algorithm developed in "A model for minimizing
+    active processor time" (Chang et al., 2012). The DCS problem is reduced to general matchings using the technique
+    from "Another look at the degree constrained subgraph problem" (Shiloach, 1981). To compute the matching itself,
+    a O(V^3) version of Edmonds' Blossom Algorithm is used. The overall complexity of the algorithm is O((nT + L)^3).
+    """
 
     @staticmethod
     def _create_job_schedules_for_job(
@@ -94,6 +112,11 @@ class DegreeConstrainedSubgraphScheduler(AbstractScheduler):
 
     @classmethod
     def process(cls, job_pool: Union[JobPoolMI, JobPool]) -> Schedule:
+        """
+        Given a set of jobs, computes an optimal solution.
+        :param job_pool: Job pool of jobs with unit length and arbitrary number of execution intervals.
+        :return: Computed schedule.
+        """
         if job_pool.size == 0:
             return Schedule(True, [], [])
 
