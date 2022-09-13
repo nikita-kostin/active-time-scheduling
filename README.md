@@ -1,7 +1,7 @@
 # Description
 
-This code is developed as a part of B.Sc. thesis in Informatics "Implementation and Analysis of Algorithms
-for the Active Time Problem", supervisor: Prof. Dr. Susanne Albers.
+This code is developed as a part of B.Sc. thesis in Informatics at Technical University of Munich "Implementation and
+Analysis of Algorithms for the Active Time Problem", supervisor: Prof. Dr. Susanne Albers.
 
 The repository comprises various algorithms for solving the Active Time Problem developed to this date. The following
 table provides a list of the implemented algorithms available in the package `schedulers` and the corresponding
