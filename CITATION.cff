@@ -7,7 +7,10 @@ message: >-
   If you use this software, please cite it using the
   metadata from this file.
 type: software
+version: 1.0.2
 authors:
   - given-names: Nikita
     family-names: Kostin
     email: nikita.kostin@tum.de
+date-released: 2022-09-14
+url: "https://github.com/nikita-kostin/active-time-scheduling"
